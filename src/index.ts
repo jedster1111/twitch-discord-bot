@@ -10,6 +10,8 @@ const port = process.env.PORT;
 
 if (!clientId || !clientSecret || !secret || !hostName || !port) throw new Error();
 
+console.log(`Setting up with clientId ${clientId}, clientSecret ${clientSecret}, secret ${secret}, hostName ${hostName}, port ${port}`)
+
 const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
 const apiClient = new ApiClient({ authProvider });
 
@@ -21,6 +23,19 @@ const adapter = new ReverseProxyAdapter({
 const listener = new EventSubHttpListener({ apiClient, adapter, secret });
 
 listener.start();
+
+listener.onSubscriptionCreateSuccess((event, subscription) => {
+  console.log(`Subscription made succesfully: ${event.id}, ${subscription.status}`)
+})
+
+listener.onSubscriptionCreateFailure((event, error) => {
+  console.log(`Subscription failed: ${event.id}, ${error.message}`)
+})
+
+listener.onVerify((isSuccess, subscription) => {
+  console.log(`onVerify: ${isSuccess}, ${subscription.id}`)
+})
+
 apiClient.users.getUsersByNames(["kobert", "jedster1111"])
   .then(users => {
     users.forEach(user => {
@@ -28,12 +43,16 @@ apiClient.users.getUsersByNames(["kobert", "jedster1111"])
 
       console.log(`Found user id for ${user.displayName}: ${user.id}`)
 
-      listener.onStreamOnline(user, event => {
+      const streamOnlineListener = listener.onStreamOnline(user, event => {
         console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
       })
 
-      listener.onStreamOffline(user, event => {
+      // console.log(await streamOnlineListener.getCliTestCommand());
+
+      const streamOfflinelisterner = listener.onStreamOffline(user, event => {
         console.log(`${event.broadcasterDisplayName} is offline!`)
       })
+
+      // console.log(await streamOfflinelisterner.getCliTestCommand());
     })
   });
