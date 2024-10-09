@@ -23,7 +23,9 @@ const adapter = new ReverseProxyAdapter({
   port: Number(port)
 });
 
+
 const listener = new EventSubHttpListener({ apiClient, adapter, secret });
+
 
 listener.start();
 
@@ -40,24 +42,29 @@ listener.onVerify((isSuccess, subscription) => {
   else console.warn(`Subscription (${subscription.id}) failed to verify.`);
 })
 
-apiClient.users.getUsersByNames(usersToSubscribeTo)
-  .then(users => {
-    users.forEach(user => {
-      if (!user) throw new Error();
+apiClient.eventSub.deleteAllSubscriptions().then(
+  () => {
+    apiClient.users.getUsersByNames(usersToSubscribeTo)
+      .then(users => {
+        users.forEach(user => {
+          if (!user) throw new Error();
 
-      console.log(`Found user id for ${user.displayName} - ${user.id}`)
+          console.log(`Found user id for ${user.displayName} - ${user.id}`)
 
-      listener.onStreamOnline(user, event => {
-        console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
-        SendTwitchStreamStartedDiscordMessage(event.broadcasterDisplayName, event.broadcasterName)
-      })
+          listener.onStreamOnline(user, event => {
+            console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
+            SendTwitchStreamStartedDiscordMessage(event.broadcasterDisplayName, event.broadcasterName)
+          })
 
-      listener.onStreamOffline(user, event => {
-        console.log(`${event.broadcasterDisplayName} is offline!`)
-        SendTwitchStreamEndedDiscordMessage(event.broadcasterDisplayName, event.broadcasterName)
-      })
-    })
-  });
+          listener.onStreamOffline(user, event => {
+            console.log(`${event.broadcasterDisplayName} is offline!`)
+            SendTwitchStreamEndedDiscordMessage(event.broadcasterDisplayName, event.broadcasterName)
+          })
+        })
+      });
+  }
+)
+
 
 function SendTwitchStreamStartedDiscordMessage(userDisplayName: string, channelName: string) {
   const embed = new EmbedBuilder()
