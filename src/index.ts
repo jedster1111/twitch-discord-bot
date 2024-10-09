@@ -12,7 +12,7 @@ const discordWebHookUrl = process.env.DISCORD_WEBHOOK_URL;
 
 if (!clientId || !clientSecret || !secret || !hostName || !port || !discordWebHookUrl) throw new Error();
 
-const usersToSubscribeTo = ["kobert", "jedster1111"];
+const usersToSubscribeTo = ["kobert", "jedster1111", "hot_cross_bun"];
 const webhookClient = new WebhookClient({ url: discordWebHookUrl });
 
 const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
