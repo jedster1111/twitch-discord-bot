@@ -12,8 +12,6 @@ const discordWebHookUrl = process.env.DISCORD_WEBHOOK_URL;
 
 if (!clientId || !clientSecret || !secret || !hostName || !port || !discordWebHookUrl) throw new Error();
 
-console.log(`Setting up with clientId ${clientId}, clientSecret ${clientSecret}, secret ${secret}, hostName ${hostName}, port ${port}`)
-
 const usersToSubscribeTo = ["kobert", "jedster1111"];
 const webhookClient = new WebhookClient({ url: discordWebHookUrl });
 
