@@ -1,7 +1,10 @@
-import { ApiClient } from '@twurple/api';
+import { ApiClient, HelixStream, HelixUser } from '@twurple/api';
 import { AppTokenAuthProvider } from '@twurple/auth';
 import { EventSubHttpListener, ReverseProxyAdapter, } from '@twurple/eventsub-http';
 import { EmbedBuilder, WebhookClient } from 'discord.js';
+
+type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
+type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -26,8 +29,9 @@ const adapter = new ReverseProxyAdapter({
 
 const listener = new EventSubHttpListener({ apiClient, adapter, secret });
 
-
 listener.start();
+
+console.log(`Started twitch-discord-bot on port ${port}!`)
 
 listener.onSubscriptionCreateSuccess((event, subscription) => {
   console.log(`Subscription (${subscription.id}) made successfully. status - ${subscription.status}, type - ${subscription.type}`)
@@ -45,39 +49,28 @@ listener.onVerify((isSuccess, subscription) => {
 apiClient.users.getUsersByNames(usersToSubscribeTo)
   .then(users => {
     users.forEach(user => {
-      if (!user) throw new Error();
+      if (!user) throw new Error(`Failed to find one of the specified users.`);
 
-      console.log(`Found user id for ${user.displayName} - ${user.id}`)
+      console.log(`Subscribing to events from ${user.displayName} - ${user.id}`)
 
-      listener.onStreamOnline(user, event => {
+      listener.onStreamOnline(user, async (event) => {
         console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
-        SendTwitchStreamStartedDiscordMessage(event.broadcasterDisplayName, event.broadcasterName)
+        SendTwitchStreamStartedDiscordMessage(event, user, await event.getStream())
       })
 
       listener.onStreamOffline(user, event => {
         console.log(`${event.broadcasterDisplayName} is offline!`)
-        SendTwitchStreamEndedDiscordMessage(event.broadcasterDisplayName, event.broadcasterName)
       })
     })
   });
 
-
-function SendTwitchStreamStartedDiscordMessage(userDisplayName: string, channelName: string) {
+function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent, user: HelixUser, stream: HelixStream | null) {
   const embed = new EmbedBuilder()
-    .setTitle(`${userDisplayName} is live on Twitch!`)
-    .setURL(`https://twitch.tv/${channelName}`)
-    .setColor(0x00FF00);
-
-  webhookClient.send({
-    embeds: [embed]
-  });
-}
-
-function SendTwitchStreamEndedDiscordMessage(userDisplayName: string, channelName: string) {
-  const embed = new EmbedBuilder()
-    .setTitle(`${userDisplayName} has gone offline.`)
-    .setURL(`https://twitch.tv/${channelName}`)
-    .setColor(0xCC0000);
+    .setTitle(`${user.displayName} just went live!`)
+    .setURL(`https://twitch.tv/${event.broadcasterName}`)
+    .setDescription(stream?.title || "")
+    .setColor(0x00FF00)
+    .setThumbnail(user.profilePictureUrl);
 
   webhookClient.send({
     embeds: [embed]
