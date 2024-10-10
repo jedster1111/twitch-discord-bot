@@ -65,16 +65,20 @@ apiClient.users.getUsersByNames(usersToSubscribeTo)
   });
 
 function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent, user: HelixUser, stream: HelixStream | null) {
-  const embed = new EmbedBuilder()
-    .setTitle(`${user.displayName} just went live!`)
-    .setURL(`https://twitch.tv/${event.broadcasterName}`)
-    .setDescription(stream?.title || "")
-    .setColor(0x00FF00)
-    .setThumbnail(user.profilePictureUrl);
+  try {
+    const embed = new EmbedBuilder()
+      .setTitle(`${user.displayName} just went live!`)
+      .setURL(`https://twitch.tv/${event.broadcasterName}`)
+      .setDescription(stream?.title || "")
+      .setColor(0x00FF00)
+      .setThumbnail(user.profilePictureUrl);
 
-  discordWebhookClients.forEach(client => {
-    client.send({
-      embeds: [embed]
+    discordWebhookClients.forEach(client => {
+      client.send({
+        embeds: [embed]
+      })
     })
-  });
+  } catch (error) {
+    console.error("Error sending Discord Webhook", error)
+  }
 }
