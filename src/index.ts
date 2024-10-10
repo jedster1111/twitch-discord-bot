@@ -69,7 +69,7 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
     const embed = new EmbedBuilder()
       .setTitle(`${user.displayName} just went live!`)
       .setURL(`https://twitch.tv/${event.broadcasterName}`)
-      .setDescription(stream?.title || "")
+      .setDescription(stream?.title || null)
       .setColor(0x00FF00)
       .setThumbnail(user.profilePictureUrl);
 
