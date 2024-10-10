@@ -11,12 +11,12 @@ const clientSecret = process.env.CLIENT_SECRET;
 const secret = process.env.SECRET;
 const hostName = process.env.HOST_NAME;
 const port = process.env.PORT;
-const discordWebHookUrl = process.env.DISCORD_WEBHOOK_URL;
+const discordWebHookUrls = process.env.DISCORD_WEBHOOK_URLS?.split(",");
 
-if (!clientId || !clientSecret || !secret || !hostName || !port || !discordWebHookUrl) throw new Error();
+if (!clientId || !clientSecret || !secret || !hostName || !port || !discordWebHookUrls || discordWebHookUrls.length === 0) throw new Error();
 
 const usersToSubscribeTo = ["kobert", "jedster1111", "hot_cross_bun"];
-const webhookClient = new WebhookClient({ url: discordWebHookUrl });
+const discordWebhookClients = discordWebHookUrls.map(url => new WebhookClient({ url }))
 
 const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
 const apiClient = new ApiClient({ authProvider });
@@ -72,7 +72,9 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
     .setColor(0x00FF00)
     .setThumbnail(user.profilePictureUrl);
 
-  webhookClient.send({
-    embeds: [embed]
+  discordWebhookClients.forEach(client => {
+    client.send({
+      embeds: [embed]
+    })
   });
 }
