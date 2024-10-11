@@ -2,6 +2,7 @@ import { ApiClient, HelixStream, HelixUser } from '@twurple/api';
 import { AppTokenAuthProvider } from '@twurple/auth';
 import { EventSubHttpListener, ReverseProxyAdapter, } from '@twurple/eventsub-http';
 import { EmbedBuilder, WebhookClient } from 'discord.js';
+import { waitToExist } from './waitFor';
 
 type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
 type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
@@ -55,7 +56,8 @@ apiClient.users.getUsersByNames(usersToSubscribeTo)
 
       listener.onStreamOnline(user, async (event) => {
         console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
-        SendTwitchStreamStartedDiscordMessage(event, user, await event.getStream())
+        const stream = await waitToExist(() => event.getStream(), 7500, 5);
+        SendTwitchStreamStartedDiscordMessage(event, user, stream)
       })
 
       listener.onStreamOffline(user, event => {
