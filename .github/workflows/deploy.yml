@@ -28,7 +28,8 @@ jobs:
           envkey_SECRET: ${{ secrets.SECRET }}
           envkey_HOST_NAME: ${{ vars.HOST_NAME }}
           envkey_PORT: ${{ vars.PORT }}
-          envkey_DISCORD_WEBHOOK_URLS: ${{ secrets.DISCORD_WEBHOOK_URLS }}
+          envkey_JED_GAMEZ_SERVER_DISCORD_WEBHOOK: ${{ secrets.JED_GAMEZ_SERVER_DISCORD_WEBHOOK }}
+          envkey_THE_BAKERY_SERVER_DISCORD_WEBHOOK: ${{ secrets.THE_BAKERY_SERVER_DISCORD_WEBHOOK }}
       - run: npm run ci:build
       - name: rsync deployments
         uses: burnett01/rsync-deployments@7.0.1
