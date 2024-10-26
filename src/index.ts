@@ -23,7 +23,7 @@ if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDis
 
 const discordWebhookToTwitchNameMap: DiscordWebhookToTwitchNameMap = {
   [JedServerDiscordWebhook]: ["kobert", "jedster1111", "hot_cross_bun"],
-  [TheBakeryServerDiscordWebhook]: ["hot_cross_bun"]
+  [TheBakeryServerDiscordWebhook]: ["hot_cross_bun", "jedster1111"]
 };
 
 const twitchNameToDiscordWebhooksMap: TwitchNameToDiscordWebhookMap = Object.entries(discordWebhookToTwitchNameMap)
