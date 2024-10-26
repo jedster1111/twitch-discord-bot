@@ -7,17 +7,41 @@ import { waitToExist } from './waitFor';
 type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
 type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
+type DiscordWebhookToTwitchNameMap = { [discChannel: string]: string[] };
+type TwitchNameToDiscordWebhookMap = { [twitchName: string]: string[] };
+type DiscordWebhookClientMap = { [discChannel: string]: WebhookClient };
+
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const secret = process.env.SECRET;
 const hostName = process.env.HOST_NAME;
 const port = process.env.PORT;
-const discordWebHookUrls = process.env.DISCORD_WEBHOOK_URLS?.split(",");
+const JedServerDiscordWebhook = process.env.JED_GAMEZ_SERVER_DISCORD_WEBHOOK;
+const TheBakeryServerDiscordWebhook = process.env.THE_BAKERY_SERVER_DISCORD_WEBHOOK;
 
-if (!clientId || !clientSecret || !secret || !hostName || !port || !discordWebHookUrls || discordWebHookUrls.length === 0) throw new Error();
+if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook) throw new Error();
 
-const usersToSubscribeTo = ["kobert", "jedster1111", "hot_cross_bun"];
-const discordWebhookClients = discordWebHookUrls.map(url => new WebhookClient({ url }))
+const discordWebhookToTwitchNameMap: DiscordWebhookToTwitchNameMap = {
+  [JedServerDiscordWebhook]: ["kobert", "jedster1111", "hot_cross_bun"],
+  [TheBakeryServerDiscordWebhook]: ["hot_cross_bun"]
+};
+
+const twitchNameToDiscordWebhooksMap: TwitchNameToDiscordWebhookMap = Object.entries(discordWebhookToTwitchNameMap)
+  .reduce<TwitchNameToDiscordWebhookMap>((accum, [discordWebhook, twitchNames]) => {
+    twitchNames.forEach(name => {
+      if (!accum[name]) { accum[name] = [discordWebhook] }
+      else { accum[name].push(discordWebhook) }
+    })
+    return accum;
+  }, {})
+
+const discordWebhookToClientMap: DiscordWebhookClientMap = Object.keys(discordWebhookToTwitchNameMap)
+  .reduce<DiscordWebhookClientMap>((accum, discordWebhook) => {
+    accum[discordWebhook] = new WebhookClient({ url: discordWebhook })
+    return accum;
+  }, {})
+
+const uniqueUsersToSubscribeTo = Object.keys(twitchNameToDiscordWebhooksMap);
 
 const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
 const apiClient = new ApiClient({ authProvider });
@@ -47,10 +71,13 @@ listener.onVerify((isSuccess, subscription) => {
   else console.warn(`Subscription (${subscription.id}) failed to verify.`);
 })
 
-apiClient.users.getUsersByNames(usersToSubscribeTo)
+apiClient.users.getUsersByNames(uniqueUsersToSubscribeTo)
   .then(users => {
     users.forEach(user => {
-      if (!user) throw new Error(`Failed to find one of the specified users.`);
+      if (!user) {
+        console.warn(`Failed to find one of the specified users.`);
+        return;
+      }
 
       console.log(`Subscribing to events from ${user.displayName} - ${user.id}`)
 
@@ -75,8 +102,13 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
       .setColor(0x00FF00)
       .setThumbnail(user.profilePictureUrl);
 
-    discordWebhookClients.forEach(client => {
-      client.send({
+    const webhooksForUser = twitchNameToDiscordWebhooksMap[user.name];
+    if (!webhooksForUser) return;
+
+    const webhookClients = webhooksForUser.map(webhook => discordWebhookToClientMap[webhook]);
+
+    webhookClients.forEach(client => {
+      client?.send({
         embeds: [embed]
       })
     })
