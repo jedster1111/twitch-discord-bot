@@ -22,7 +22,7 @@ const TheBakeryServerDiscordWebhook = process.env.THE_BAKERY_SERVER_DISCORD_WEBH
 if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook) throw new Error();
 
 const discordWebhookToTwitchNameMap: DiscordWebhookToTwitchNameMap = {
-  [JedServerDiscordWebhook]: ["kobert", "jedster1111", "hot_cross_bun"],
+  [JedServerDiscordWebhook]: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"],
   [TheBakeryServerDiscordWebhook]: ["hot_cross_bun"]
 };
 
