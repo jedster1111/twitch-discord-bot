@@ -18,6 +18,8 @@ type SaturatedDiscordServerInfo = DiscordServerInfo & { discordWebhookClient: We
 type TwitchNameToDiscordWebhookMap = { [twitchName: string]: string[] };
 type SaturatedDiscordServerInfoMappedByWebhook = { [discordWebhook: string]: SaturatedDiscordServerInfo };
 
+const TWITCH_ICON_URL = "https://cdn.discordapp.com/attachments/480095526193201202/1337242207018680412/image.png?ex=67a6bb5a&is=67a569da&hm=4c74f81ba39e83c5f0200017f4a12aac1a8c4c3096da479a38b1d580d70b81af&"
+
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const secret = process.env.SECRET;
@@ -131,7 +133,7 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
 
       webhookClient.send({
         username: messageConfig?.botName,
-        avatarURL: messageConfig?.avatarPictureUrl,
+        avatarURL: messageConfig?.avatarPictureUrl || TWITCH_ICON_URL,
         embeds: [embed]
       })
     })
