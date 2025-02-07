@@ -115,7 +115,7 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
     const embed = new EmbedBuilder()
       .setTitle(`${user.displayName} just went live!`)
       .setURL(`https://twitch.tv/${event.broadcasterName}`)
-      .setDescription(stream?.title || null)
+      .setDescription(generateDescription(stream))
       .setColor(0x00FF00)
       .setThumbnail(user.profilePictureUrl);
 
@@ -138,4 +138,12 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
   } catch (error) {
     console.error("Error sending message to Discord Webhook", error)
   }
+}
+
+function generateDescription(stream: HelixStream | null): string {
+  const firstLine = `${stream?.title || "Come join!"}`
+  const secondLine = `*Streaming **${stream?.gameName || "???"}***`
+  const description = `${firstLine}\n\n${secondLine}`
+
+  return description;
 }
