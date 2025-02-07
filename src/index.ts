@@ -36,7 +36,7 @@ const discordServerInfos: DiscordServerInfo[] = [
   { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
   {
     discordWebhook: KobertServerDiscordWebhook,
-    twitchChannelNamesToWatch: ["kobert", "jedster1111"],
+    twitchChannelNamesToWatch: ["kobert"],
     discordMessageConfig: { botName: "Anna Hown Sminth", avatarPictureUrl: "https://i.imgur.com/PMu18WI.png" }
   },
 ]
