@@ -120,7 +120,7 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
       .setThumbnail(user.profilePictureUrl);
 
     const webhooksForUser = twitchNameToDiscordWebhooksMap[user.name];
-    if (!webhooksForUser) return;
+    if (!webhooksForUser) throw new Error("Failed to find discord channels to send message to for twitch channel");
 
     webhooksForUser.forEach(webhook => {
       const discordServerInfo = saturatedDiscordServerInfoMap[webhook];
