@@ -19,12 +19,14 @@ const hostName = process.env.HOST_NAME;
 const port = process.env.PORT;
 const JedServerDiscordWebhook = process.env.JED_GAMEZ_SERVER_DISCORD_WEBHOOK;
 const TheBakeryServerDiscordWebhook = process.env.THE_BAKERY_SERVER_DISCORD_WEBHOOK;
+const KobertServerDiscordWebhook = process.env.KOBERT_SERVER_DISCORD_WEBHOOK;
 
-if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook) throw new Error();
+if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook || !KobertServerDiscordWebhook) throw new Error();
 
 const discordServerInfos: DiscordServerInfo[] = [
   { discordWebhook: JedServerDiscordWebhook, twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"] },
   { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
+  { discordWebhook: KobertServerDiscordWebhook, twitchChannelNamesToWatch: ["kobert", "jedster1111"] },
 ]
 
 // Construct a map of twitch channels to discord webhooks that need to be alerted when that channel goes live
