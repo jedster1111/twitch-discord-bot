@@ -56,7 +56,6 @@ const adapter = new ReverseProxyAdapter({
   port: Number(port)
 });
 
-
 const twitchListener = new EventSubHttpListener({ apiClient: twitchApiClient, adapter, secret });
 
 twitchListener.start();
