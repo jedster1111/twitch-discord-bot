@@ -7,7 +7,8 @@ import { waitToExist } from './waitFor';
 type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
 type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
-type DiscordWebhookToTwitchNameMap = { [discChannel: string]: string[] };
+type DiscordServerInfo = { discordWebhook: string, twitchChannelNamesToWatch: string[] }
+
 type TwitchNameToDiscordWebhookMap = { [twitchName: string]: string[] };
 type DiscordWebhookClientMap = { [discChannel: string]: WebhookClient };
 
@@ -21,22 +22,24 @@ const TheBakeryServerDiscordWebhook = process.env.THE_BAKERY_SERVER_DISCORD_WEBH
 
 if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook) throw new Error();
 
-const discordWebhookToTwitchNameMap: DiscordWebhookToTwitchNameMap = {
-  [JedServerDiscordWebhook]: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"],
-  [TheBakeryServerDiscordWebhook]: ["hot_cross_bun"]
-};
+const discordServerInfos: DiscordServerInfo[] = [
+  { discordWebhook: JedServerDiscordWebhook, twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"] },
+  { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
+]
 
-const twitchNameToDiscordWebhooksMap: TwitchNameToDiscordWebhookMap = Object.entries(discordWebhookToTwitchNameMap)
-  .reduce<TwitchNameToDiscordWebhookMap>((accum, [discordWebhook, twitchNames]) => {
-    twitchNames.forEach(name => {
+// Construct a map of twitch channels to discord webhooks that need to be alerted when that channel goes live
+const twitchNameToDiscordWebhooksMap: TwitchNameToDiscordWebhookMap = discordServerInfos
+  .reduce<TwitchNameToDiscordWebhookMap>((accum, { discordWebhook, twitchChannelNamesToWatch }) => {
+    twitchChannelNamesToWatch.forEach(name => {
       if (!accum[name]) { accum[name] = [discordWebhook] }
       else { accum[name].push(discordWebhook) }
     })
     return accum;
   }, {})
 
-const discordWebhookToClientMap: DiscordWebhookClientMap = Object.keys(discordWebhookToTwitchNameMap)
-  .reduce<DiscordWebhookClientMap>((accum, discordWebhook) => {
+// Construct a map of discord webhook urls to discord webhook clients
+const discordWebhookToClientMap: DiscordWebhookClientMap = discordServerInfos
+  .reduce<DiscordWebhookClientMap>((accum, { discordWebhook }) => {
     accum[discordWebhook] = new WebhookClient({ url: discordWebhook })
     return accum;
   }, {})
@@ -44,7 +47,7 @@ const discordWebhookToClientMap: DiscordWebhookClientMap = Object.keys(discordWe
 const uniqueUsersToSubscribeTo = Object.keys(twitchNameToDiscordWebhooksMap);
 
 const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
-const apiClient = new ApiClient({ authProvider });
+const twitchApiClient = new ApiClient({ authProvider });
 
 const adapter = new ReverseProxyAdapter({
   hostName,
@@ -52,26 +55,26 @@ const adapter = new ReverseProxyAdapter({
 });
 
 
-const listener = new EventSubHttpListener({ apiClient, adapter, secret });
+const twitchListener = new EventSubHttpListener({ apiClient: twitchApiClient, adapter, secret });
 
-listener.start();
+twitchListener.start();
 
 console.log(`Started twitch-discord-bot on port ${port}!`)
 
-listener.onSubscriptionCreateSuccess((event, subscription) => {
+twitchListener.onSubscriptionCreateSuccess((event, subscription) => {
   console.log(`Subscription (${subscription.id}) made successfully. status - ${subscription.status}, type - ${subscription.type}`)
 })
 
-listener.onSubscriptionCreateFailure((event, error) => {
+twitchListener.onSubscriptionCreateFailure((event, error) => {
   console.log(`Subscription failed. error - ${error.message}`)
 })
 
-listener.onVerify((isSuccess, subscription) => {
+twitchListener.onVerify((isSuccess, subscription) => {
   if (isSuccess) console.log(`Subscription (${subscription.id}) verified.`);
   else console.warn(`Subscription (${subscription.id}) failed to verify.`);
 })
 
-apiClient.users.getUsersByNames(uniqueUsersToSubscribeTo)
+twitchApiClient.users.getUsersByNames(uniqueUsersToSubscribeTo)
   .then(users => {
     users.forEach(user => {
       if (!user) {
@@ -81,13 +84,13 @@ apiClient.users.getUsersByNames(uniqueUsersToSubscribeTo)
 
       console.log(`Subscribing to events from ${user.displayName} - ${user.id}`)
 
-      listener.onStreamOnline(user, async (event) => {
+      twitchListener.onStreamOnline(user, async (event) => {
         console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
         const stream = await waitToExist(() => event.getStream(), 7500, 5);
         SendTwitchStreamStartedDiscordMessage(event, user, stream)
       })
 
-      listener.onStreamOffline(user, event => {
+      twitchListener.onStreamOffline(user, event => {
         console.log(`${event.broadcasterDisplayName} is offline!`)
       })
     })
