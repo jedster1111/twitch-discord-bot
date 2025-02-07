@@ -7,10 +7,16 @@ import { waitToExist } from './waitFor';
 type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
 type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
-type DiscordServerInfo = { discordWebhook: string, twitchChannelNamesToWatch: string[] }
+type DiscordServerInfo = {
+  discordWebhook: string,
+  twitchChannelNamesToWatch: string[],
+  discordMessageConfig?: { botName?: string, avatarPictureUrl?: string }
+}
+
+type SaturatedDiscordServerInfo = DiscordServerInfo & { discordWebhookClient: WebhookClient };
 
 type TwitchNameToDiscordWebhookMap = { [twitchName: string]: string[] };
-type DiscordWebhookClientMap = { [discChannel: string]: WebhookClient };
+type SaturatedDiscordServerInfoMappedByWebhook = { [discordWebhook: string]: SaturatedDiscordServerInfo };
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -26,11 +32,15 @@ if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDis
 const discordServerInfos: DiscordServerInfo[] = [
   { discordWebhook: JedServerDiscordWebhook, twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"] },
   { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
-  { discordWebhook: KobertServerDiscordWebhook, twitchChannelNamesToWatch: ["kobert", "jedster1111"] },
+  {
+    discordWebhook: KobertServerDiscordWebhook,
+    twitchChannelNamesToWatch: ["kobert", "jedster1111"],
+    discordMessageConfig: { botName: "Anna Hown Sminth", avatarPictureUrl: "https://imgur.com/PMu18WI" }
+  },
 ]
 
 // Construct a map of twitch channels to discord webhooks that need to be alerted when that channel goes live
-const twitchNameToDiscordWebhooksMap: TwitchNameToDiscordWebhookMap = discordServerInfos
+const twitchNameToDiscordWebhooksMap = discordServerInfos
   .reduce<TwitchNameToDiscordWebhookMap>((accum, { discordWebhook, twitchChannelNamesToWatch }) => {
     twitchChannelNamesToWatch.forEach(name => {
       if (!accum[name]) { accum[name] = [discordWebhook] }
@@ -40,9 +50,12 @@ const twitchNameToDiscordWebhooksMap: TwitchNameToDiscordWebhookMap = discordSer
   }, {})
 
 // Construct a map of discord webhook urls to discord webhook clients
-const discordWebhookToClientMap: DiscordWebhookClientMap = discordServerInfos
-  .reduce<DiscordWebhookClientMap>((accum, { discordWebhook }) => {
-    accum[discordWebhook] = new WebhookClient({ url: discordWebhook })
+const saturatedDiscordServerInfoMap = discordServerInfos
+  .reduce<SaturatedDiscordServerInfoMappedByWebhook>((accum, discordServerInfo) => {
+    accum[discordServerInfo.discordWebhook] = {
+      ...discordServerInfo,
+      discordWebhookClient: new WebhookClient({ url: discordServerInfo.discordWebhook })
+    }
     return accum;
   }, {})
 
@@ -109,14 +122,20 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
     const webhooksForUser = twitchNameToDiscordWebhooksMap[user.name];
     if (!webhooksForUser) return;
 
-    const webhookClients = webhooksForUser.map(webhook => discordWebhookToClientMap[webhook]);
+    webhooksForUser.forEach(webhook => {
+      const discordServerInfo = saturatedDiscordServerInfoMap[webhook];
+      if (!discordServerInfo) throw new Error("Failed to find discord server info for specified webhook")
 
-    webhookClients.forEach(client => {
-      client?.send({
+      const webhookClient = discordServerInfo.discordWebhookClient;
+      const messageConfig = discordServerInfo.discordMessageConfig;
+
+      webhookClient.send({
+        username: messageConfig?.botName,
+        avatarURL: messageConfig?.avatarPictureUrl,
         embeds: [embed]
       })
     })
   } catch (error) {
-    console.error("Error sending Discord Webhook", error)
+    console.error("Error sending message to Discord Webhook", error)
   }
 }
