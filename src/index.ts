@@ -10,7 +10,7 @@ type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0]
 type DiscordServerInfo = {
   discordWebhook: string,
   twitchChannelNamesToWatch: string[],
-  discordMessageConfig?: { botName?: string, avatarPictureUrl?: string }
+  discordMessageConfig?: { botName?: string, avatarPictureUrl?: string, shouldTagEveryone?: boolean }
 }
 
 type SaturatedDiscordServerInfo = DiscordServerInfo & { discordWebhookClient: WebhookClient };
@@ -32,7 +32,11 @@ const KobertServerDiscordWebhook = process.env.KOBERT_SERVER_DISCORD_WEBHOOK;
 if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook || !KobertServerDiscordWebhook) throw new Error();
 
 const discordServerInfos: DiscordServerInfo[] = [
-  { discordWebhook: JedServerDiscordWebhook, twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"] },
+  {
+    discordWebhook: JedServerDiscordWebhook,
+    twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"],
+    discordMessageConfig: { shouldTagEveryone: true }
+  },
   { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
   {
     discordWebhook: KobertServerDiscordWebhook,
@@ -134,6 +138,7 @@ function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent,
       webhookClient.send({
         username: messageConfig?.botName,
         avatarURL: messageConfig?.avatarPictureUrl || TWITCH_ICON_URL,
+        content: messageConfig?.shouldTagEveryone ? "@everyone" : undefined,
         embeds: [embed]
       })
     })
