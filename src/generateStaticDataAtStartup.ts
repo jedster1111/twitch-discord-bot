@@ -13,9 +13,9 @@ export const generateStaticDataAtStartup = ({ JedServerDiscordWebhook, TheBakery
   const discordServerInfos: DiscordServerInfo[] = [
     {
       discordWebhook: JedServerDiscordWebhook,
-      twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"]
+      twitchChannelNamesToWatch: ["kobert", "jedster1111", "hotcrossbuntv", "thelightsider"]
     },
-    { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
+    { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hotcrossbuntv"] },
     {
       discordWebhook: KobertServerDiscordWebhook,
       twitchChannelNamesToWatch: ["kobert"],
