@@ -49,14 +49,17 @@ if (!clientId || !clientSecret || !secret || !hostName || !port || !JedServerDis
 const discordServerInfos: DiscordServerInfo[] = [
   {
     discordWebhook: JedServerDiscordWebhook,
-    twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"],
-    discordMessageConfig: { titleTemplate: "Did you know, %s has just gone live!" }
+    twitchChannelNamesToWatch: ["kobert", "jedster1111", "hot_cross_bun", "thelightsider"]
   },
   { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hot_cross_bun"] },
   {
     discordWebhook: KobertServerDiscordWebhook,
     twitchChannelNamesToWatch: ["kobert"],
-    discordMessageConfig: { botName: "Anna Hown Sminth", avatarPictureUrl: "https://i.imgur.com/PMu18WI.png", titleTemplate: "%s is live and feeling purposeful! holy cow! join before he loses it!" }
+    discordMessageConfig: {
+      botName: "Anna Hown Sminth",
+      avatarPictureUrl: "https://i.imgur.com/PMu18WI.png",
+      titleTemplate: "%s is live and feeling purposeful! holy cow! join before he loses it!"
+    }
   },
 ]
 
