@@ -10,23 +10,23 @@ import { buildEmbed } from './discordEmbed';
 
 
 const envConfig = loadEnvVars();
-const { clientId, clientSecret, hostName, port, secret } = envConfig;
+const { twitchClientId, twitchClientSecret, hostName, twitchListenerPort, twitchEventSubSecret } = envConfig;
 
 const staticData = generateStaticDataAtStartup(envConfig)
 
-const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
+const authProvider = new AppTokenAuthProvider(twitchClientId, twitchClientSecret);
 const twitchApiClient = new ApiClient({ authProvider });
 
 const adapter = new ReverseProxyAdapter({
   hostName,
-  port: Number(port)
+  port: Number(twitchListenerPort)
 });
 
-const twitchListener = new EventSubHttpListener({ apiClient: twitchApiClient, adapter, secret });
+const twitchListener = new EventSubHttpListener({ apiClient: twitchApiClient, adapter, secret: twitchEventSubSecret });
 
 twitchListener.start();
 
-console.log(`Started twitch listener on port ${port}!`)
+console.log(`Started twitch listener on port ${twitchListenerPort}!`)
 
 twitchListener.onSubscriptionCreateSuccess((event, subscription) => {
   console.log(`Subscription (${subscription.id}) made successfully. status - ${subscription.status}, type - ${subscription.type}`)
