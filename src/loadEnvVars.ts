@@ -14,6 +14,7 @@ export type EnvConfig = {
   KobertServerDiscordWebhook: string,
 
   discordBotToken: string,
+  discordBotClientId: string
 
   /**
    * This is only used to enable running the app locally for development purposes.
@@ -34,10 +35,11 @@ export const loadEnvVars = (): EnvConfig => {
   const KobertServerDiscordWebhook = process.env.KOBERT_SERVER_DISCORD_WEBHOOK;
 
   const discordBotToken = process.env.DISCORD_BOT_TOKEN;
+  const discordBotClientId = process.env.DISCORD_BOT_CLIENT_ID;
 
   const ngrokAuthToken = process.env.NGROK_AUTH_TOKEN;
 
-  if (!twitchClientId || !twitchClientSecret || !twitchEventSubSecret || !hostName || !twitchListenerPort || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook || !KobertServerDiscordWebhook || !discordBotToken) throw new Error();
+  if (!twitchClientId || !twitchClientSecret || !twitchEventSubSecret || !hostName || !twitchListenerPort || !JedServerDiscordWebhook || !TheBakeryServerDiscordWebhook || !KobertServerDiscordWebhook || !discordBotToken || !discordBotClientId) throw new Error();
   if (!(environment === "dev" || environment === "prod")) throw new Error("ENVIRONMENT variable was not either 'dev' or 'prod'!");
 
   return {
@@ -51,6 +53,9 @@ export const loadEnvVars = (): EnvConfig => {
     TheBakeryServerDiscordWebhook,
     KobertServerDiscordWebhook,
     discordBotToken,
+    discordBotClientId,
     ngrokAuthToken
   }
 }
+
+export const envVars = loadEnvVars();

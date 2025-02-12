@@ -19,6 +19,7 @@
     "build": "tsc",
     "start": "node --env-file=.env ./dist/index.js",
     "start:dev": "tsc && NODE_OPTIONS=\"--loader ts-node/esm\" node --env-file=.env ./src/index.ts",
-    "ci:build": "npm run build && mkdir -p out && cp -r dist ./out/dist && cp package*.json out && cp .env out && cd out && npm install --production"
+    "ci:build": "npm run build && mkdir -p out && cp -r dist ./out/dist && cp package*.json out && cp .env out && cd out && npm install --production",
+    "deploy-discord-commands": "tsc && NODE_OPTIONS=\"--loader ts-node/esm\" node --env-file=.env ./src/discord/deployCommands.ts"
   }
 }

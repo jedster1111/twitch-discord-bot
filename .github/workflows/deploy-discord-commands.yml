@@ -1,0 +1,36 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Deploy Discord Commands
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: "npm"
+      - run: npm ci
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v2.0
+        with:
+          envkey_ENVIRONMENT: prod
+          envkey_TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          envkey_TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          envkey_TWITCH_EVENT_SUB_SECRET: ${{ secrets.TWITCH_EVENT_SUB_SECRET }}
+          envkey_TWITCH_LISTENER_PORT: ${{ vars.TWITCH_LISTENER_PORT }}
+          envkey_HOST_NAME: ${{ vars.HOST_NAME }}
+          envkey_JED_GAMEZ_SERVER_DISCORD_WEBHOOK: ${{ secrets.JED_GAMEZ_SERVER_DISCORD_WEBHOOK }}
+          envkey_THE_BAKERY_SERVER_DISCORD_WEBHOOK: ${{ secrets.THE_BAKERY_SERVER_DISCORD_WEBHOOK }}
+          envkey_KOBERT_SERVER_DISCORD_WEBHOOK: ${{ secrets.KOBERT_SERVER_DISCORD_WEBHOOK }}
+          envkey_DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          envkey_DISCORD_BOT_CLIENT_ID: ${{ secrets.DISCORD_BOT_CLIENT_ID }}
+      - run: npm run deploy-discord-commands

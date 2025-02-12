@@ -1,7 +1,7 @@
 import { HelixStream, HelixUser } from '@twurple/api';
 import { waitToExist } from './waitFor.js';
 import { EventSubStreamOnlineEvent } from './types.js';
-import { loadEnvVars } from './loadEnvVars.js';
+import { envVars } from './loadEnvVars.js';
 import { generateStaticDataAtStartup } from './generateStaticDataAtStartup.js';
 import { TWITCH_ICON_URL } from './constants.js';
 import { buildEmbed } from './discordEmbed.js';
@@ -10,14 +10,12 @@ import { createTwitchListener } from './createTwitchListener.js';
 import "./discord/bot.js";
 
 
-const envConfig = loadEnvVars();
-
 const staticData = generateStaticDataAtStartup();
 
-const { twitchApiClient, twitchEventSubListener } = await createTwitchListener(envConfig);
+const { twitchApiClient, twitchEventSubListener } = await createTwitchListener();
 twitchEventSubListener.start();
 
-console.log(`Started twitch listener on port ${envConfig.twitchListenerPort}!`)
+console.log(`Started twitch listener on port ${envVars.twitchListenerPort}!`)
 
 twitchEventSubListener.onSubscriptionCreateSuccess((event, subscription) => {
   console.log(`Subscription (${subscription.id}) made successfully. status - ${subscription.status}, type - ${subscription.type}`)

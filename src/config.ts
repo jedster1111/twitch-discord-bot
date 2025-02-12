@@ -1,7 +1,7 @@
-import { loadEnvVars } from "./loadEnvVars.js";
+import { envVars } from "./loadEnvVars.js";
 import { DiscordServerInfo } from "./types.js";
 
-const { environment, JedServerDiscordWebhook, TheBakeryServerDiscordWebhook, KobertServerDiscordWebhook } = loadEnvVars();
+const { environment, JedServerDiscordWebhook, TheBakeryServerDiscordWebhook, KobertServerDiscordWebhook } = envVars;
 
 const prodDiscordServerInfos: DiscordServerInfo[] = [
   {
