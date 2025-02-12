@@ -3,15 +3,15 @@ import { Command, CommandConfig } from "./types.js";
 import { UsageStore } from "../store/timestampStore.js";
 
 const config: CommandConfig = {
-  cooldown: 20_000
+  cooldown: 3_000
 }
 
 const builder = new SlashCommandBuilder()
-  .setName("ping")
-  .setDescription("Replies with Pong!");
+  .setName("pong")
+  .setDescription("Replies with Ping!");
 
 const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
-  await interaction.reply('Pong!')
+  await interaction.reply('Ping!')
 }
 
 const command: Command = {
