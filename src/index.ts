@@ -1,42 +1,33 @@
-import { ApiClient, HelixStream, HelixUser } from '@twurple/api';
-import { AppTokenAuthProvider } from '@twurple/auth';
-import { EventSubHttpListener, ReverseProxyAdapter, } from '@twurple/eventsub-http';
-import { waitToExist } from './waitFor';
-import { EventSubStreamOnlineEvent } from './types';
-import { loadEnvVars } from './loadEnvVars';
-import { generateStaticDataAtStartup } from './generateStaticDataAtStartup';
-import { TWITCH_ICON_URL } from './constants';
-import { buildEmbed } from './discordEmbed';
+import { HelixStream, HelixUser } from '@twurple/api';
+import { waitToExist } from './waitFor.js';
+import { EventSubStreamOnlineEvent } from './types.js';
+import { loadEnvVars } from './loadEnvVars.js';
+import { generateStaticDataAtStartup } from './generateStaticDataAtStartup.js';
+import { TWITCH_ICON_URL } from './constants.js';
+import { buildEmbed } from './discordEmbed.js';
+import { createTwitchListener } from './createTwitchListener.js';
+
+import "./discord/bot.js";
 
 
 const envConfig = loadEnvVars();
-const { twitchClientId, twitchClientSecret, hostName, twitchListenerPort, twitchEventSubSecret } = envConfig;
 
-const staticData = generateStaticDataAtStartup(envConfig)
+const staticData = generateStaticDataAtStartup();
 
-const authProvider = new AppTokenAuthProvider(twitchClientId, twitchClientSecret);
-const twitchApiClient = new ApiClient({ authProvider });
+const { twitchApiClient, twitchEventSubListener } = await createTwitchListener(envConfig);
+twitchEventSubListener.start();
 
-const adapter = new ReverseProxyAdapter({
-  hostName,
-  port: Number(twitchListenerPort)
-});
+console.log(`Started twitch listener on port ${envConfig.twitchListenerPort}!`)
 
-const twitchListener = new EventSubHttpListener({ apiClient: twitchApiClient, adapter, secret: twitchEventSubSecret });
-
-twitchListener.start();
-
-console.log(`Started twitch listener on port ${twitchListenerPort}!`)
-
-twitchListener.onSubscriptionCreateSuccess((event, subscription) => {
+twitchEventSubListener.onSubscriptionCreateSuccess((event, subscription) => {
   console.log(`Subscription (${subscription.id}) made successfully. status - ${subscription.status}, type - ${subscription.type}`)
 })
 
-twitchListener.onSubscriptionCreateFailure((event, error) => {
+twitchEventSubListener.onSubscriptionCreateFailure((event, error) => {
   console.log(`Subscription failed. error - ${error.message}`)
 })
 
-twitchListener.onVerify((isSuccess, subscription) => {
+twitchEventSubListener.onVerify((isSuccess, subscription) => {
   if (isSuccess) console.log(`Subscription (${subscription.id}) verified.`);
   else console.warn(`Subscription (${subscription.id}) failed to verify.`);
 })
@@ -51,13 +42,13 @@ twitchApiClient.users.getUsersByNames(staticData.uniqueUsersToSubscribeTo)
 
       console.log(`Subscribing to events from ${user.displayName} - ${user.id}`)
 
-      twitchListener.onStreamOnline(user, async (event) => {
+      twitchEventSubListener.onStreamOnline(user, async (event) => {
         console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`)
         const stream = await waitToExist(() => event.getStream(), 7500, 5);
         SendTwitchStreamStartedDiscordMessage(event, user, stream)
       })
 
-      twitchListener.onStreamOffline(user, event => {
+      twitchEventSubListener.onStreamOffline(user, event => {
         console.log(`${event.broadcasterDisplayName} is offline!`)
       })
     })

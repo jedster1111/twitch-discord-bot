@@ -1,20 +1,24 @@
 {
+  "type": "module",
   "dependencies": {
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",
     "@twurple/eventsub-http": "^7.1.0",
+    "@twurple/eventsub-ngrok": "^7.2.1",
     "discord.js": "^14.16.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
     "eslint": "^9.11.1",
     "globals": "^15.9.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.7.0"
   },
   "scripts": {
     "build": "tsc",
     "start": "node --env-file=.env ./dist/index.js",
+    "start:dev": "tsc && NODE_OPTIONS=\"--loader ts-node/esm\" node --env-file=.env ./src/index.ts",
     "ci:build": "npm run build && mkdir -p out && cp -r dist ./out/dist && cp package*.json out && cp .env out && cd out && npm install --production"
   }
 }

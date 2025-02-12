@@ -1,6 +1,6 @@
 import { WebhookClient } from "discord.js"
-import { DiscordServerInfo, TwitchNameToDiscordWebhookMap, SaturatedDiscordServerInfoMappedByWebhook } from "./types"
-import { EnvConfig } from "./loadEnvVars"
+import { DiscordServerInfo, TwitchNameToDiscordWebhookMap, SaturatedDiscordServerInfoMappedByWebhook } from "./types.js"
+import { discordServerInfos } from "./config.js"
 
 type Return = {
   discordServerInfos: DiscordServerInfo[],
@@ -9,24 +9,7 @@ type Return = {
   uniqueUsersToSubscribeTo: string[]
 }
 
-export const generateStaticDataAtStartup = ({ JedServerDiscordWebhook, TheBakeryServerDiscordWebhook, KobertServerDiscordWebhook }: EnvConfig): Return => {
-  const discordServerInfos: DiscordServerInfo[] = [
-    {
-      discordWebhook: JedServerDiscordWebhook,
-      twitchChannelNamesToWatch: ["kobert", "jedster1111", "hotcrossbuntv", "thelightsider"]
-    },
-    { discordWebhook: TheBakeryServerDiscordWebhook, twitchChannelNamesToWatch: ["hotcrossbuntv"] },
-    {
-      discordWebhook: KobertServerDiscordWebhook,
-      twitchChannelNamesToWatch: ["kobert"],
-      discordMessageConfig: {
-        botName: "Anna Hown Sminth",
-        avatarPictureUrl: "https://i.imgur.com/PMu18WI.png",
-        titleTemplate: "%s is live and feeling purposeful! holy cow! join before he loses it!"
-      }
-    },
-  ]
-
+export const generateStaticDataAtStartup = (): Return => {
   // Construct a map of twitch channels to discord webhooks that need to be alerted when that channel goes live
   const twitchNameToDiscordWebhooksMap = discordServerInfos
     .reduce<TwitchNameToDiscordWebhookMap>((accum, { discordWebhook, twitchChannelNamesToWatch }) => {

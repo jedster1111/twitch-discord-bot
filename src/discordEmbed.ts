@@ -2,8 +2,8 @@ import { format } from "node:util";
 
 import { HelixUser, HelixStream } from "@twurple/api";
 import { EmbedBuilder } from "discord.js";
-import { DiscordMessageConfig, EventSubStreamOnlineEvent } from "./types";
-import { DEFAULT_TITLE_TEMPLATE } from "./constants";
+import { DiscordMessageConfig, EventSubStreamOnlineEvent } from "./types.js";
+import { DEFAULT_TITLE_TEMPLATE } from "./constants.js";
 
 export function buildEmbed(messageConfig: DiscordMessageConfig | undefined, event: EventSubStreamOnlineEvent, user: HelixUser, stream: HelixStream | null): EmbedBuilder {
   return new EmbedBuilder()
