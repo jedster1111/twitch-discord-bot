@@ -6,9 +6,10 @@ const config: CommandConfig = {
   cooldown: 20_000
 }
 
-const builder = new SlashCommandBuilder()
+const commandJson = new SlashCommandBuilder()
   .setName("ping")
-  .setDescription("Replies with Pong!");
+  .setDescription("Replies with Pong!")
+  .toJSON();
 
 const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
   await interaction.reply('Pong!')
@@ -16,7 +17,7 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
 
 const command: Command = {
   config,
-  builder,
+  commandJson,
   handler,
   usageStore: new UsageStore()
 }

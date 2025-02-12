@@ -9,7 +9,7 @@ const deployCommands = async () => {
 
   try {
     console.log(`Started refreshing ${commands.length} application (/) commands.`);
-    const commandsJson: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.builder.toJSON());
+    const commandsJson: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.commandJson);
     const data: any = await restClient.put(
       Routes.applicationCommands(discordBotClientId),
       { body: commandsJson },

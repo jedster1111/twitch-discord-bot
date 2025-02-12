@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js"
+import { CacheType, ChatInputCommandInteraction, RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js"
 import { UsageStore } from "../store/timestampStore.js"
 
 export type CommandConfig = {
@@ -12,7 +12,7 @@ export type CommandHandler = (interaction: ChatInputCommandInteraction<CacheType
 
 export type Command = {
   config?: CommandConfig,
-  builder: SlashCommandBuilder,
+  commandJson: RESTPostAPIChatInputApplicationCommandsJSONBody,
   handler: CommandHandler,
   usageStore: UsageStore
 }
