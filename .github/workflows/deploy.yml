@@ -33,6 +33,7 @@ jobs:
           envkey_THE_BAKERY_SERVER_DISCORD_WEBHOOK: ${{ secrets.THE_BAKERY_SERVER_DISCORD_WEBHOOK }}
           envkey_KOBERT_SERVER_DISCORD_WEBHOOK: ${{ secrets.KOBERT_SERVER_DISCORD_WEBHOOK }}
           envkey_DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          envkey_DISCORD_BOT_CLIENT_ID: ${{ secrets.DISCORD_BOT_CLIENT_ID }}
       - run: npm run ci:build
       - name: rsync deployments
         uses: burnett01/rsync-deployments@7.0.1
