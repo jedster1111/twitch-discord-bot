@@ -1,5 +1,5 @@
 import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes } from "discord.js";
-import commands from "./commands/index.js";
+import { commands } from "./commands/index.js";
 import { envVars } from "../loadEnvVars.js";
 
 const { discordBotToken, discordBotClientId } = envVars;
@@ -9,7 +9,7 @@ const deployCommands = async () => {
 
   try {
     console.log(`Started refreshing ${commands.length} application (/) commands.`);
-    const commandsJson: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.commandBuilder.toJSON());
+    const commandsJson: RESTPostAPIChatInputApplicationCommandsJSONBody[] = commands.map(command => command.builder.toJSON());
     const data: any = await restClient.put(
       Routes.applicationCommands(discordBotClientId),
       { body: commandsJson },

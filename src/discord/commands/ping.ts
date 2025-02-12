@@ -1,22 +1,24 @@
 import { CacheType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Command, CommandConfig } from "./types.js";
+import { UsageStore } from "../store/timestampStore.js";
 
 const config: CommandConfig = {
-  cooldown: 5
+  cooldown: 20_000
 }
 
-const commandBuilder = new SlashCommandBuilder()
+const builder = new SlashCommandBuilder()
   .setName("ping")
   .setDescription("Replies with Pong!");
 
-const commandHandler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
+const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
   await interaction.reply('Pong!')
 }
 
 const pingCommand: Command = {
   config,
-  commandBuilder,
-  commandHandler
+  builder,
+  handler,
+  usageStore: new UsageStore()
 }
 
 export default pingCommand;
