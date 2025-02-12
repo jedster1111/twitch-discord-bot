@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, MessageFlags } from "discord.js";
 import { envVars } from "../loadEnvVars.js";
-import { handlePingCommand } from "./commands/ping.js";
+import ping from "./commands/ping.js";
 
 const { discordBotToken } = envVars;
 
@@ -19,7 +19,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	// TODO: Middleware pattern?
 	if (interaction.commandName === "ping") {
 		try {
-			await handlePingCommand(interaction);
+			await ping.commandHandler(interaction);
 		} catch (error) {
 			console.error(error);
 			if (interaction.replied || interaction.deferred) {
