@@ -5,17 +5,14 @@ import { envVars } from './loadEnvVars.js';
 import { generateStaticDataAtStartup } from './generateStaticDataAtStartup.js';
 import { TWITCH_ICON_URL } from './constants.js';
 import { buildEmbed } from './discordEmbed.js';
-import { createTwitchListener } from './createTwitchListener.js';
+import { twitchApiClient, twitchEventSubListener } from './createTwitchListener.js'
+
+twitchEventSubListener.start();
+console.log(`Started twitch listener on port ${envVars.twitchListenerPort}!`)
 
 import "./discord/bot.js";
 
-
 const staticData = generateStaticDataAtStartup();
-
-const { twitchApiClient, twitchEventSubListener } = await createTwitchListener();
-twitchEventSubListener.start();
-
-console.log(`Started twitch listener on port ${envVars.twitchListenerPort}!`)
 
 twitchEventSubListener.onSubscriptionCreateSuccess((event, subscription) => {
   console.log(`Subscription (${subscription.id}) made successfully. status - ${subscription.status}, type - ${subscription.type}`)

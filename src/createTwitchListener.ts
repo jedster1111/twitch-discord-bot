@@ -4,7 +4,7 @@ import { EventSubHttpListener, ReverseProxyAdapter } from '@twurple/eventsub-htt
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 import { envVars } from './loadEnvVars.js';
 
-export async function createTwitchListener() {
+async function createTwitchListener() {
   const authProvider = new AppTokenAuthProvider(envVars.twitchClientId, envVars.twitchClientSecret);
   const twitchApiClient = new ApiClient({ authProvider });
 
@@ -50,3 +50,5 @@ async function createTwitchEventSubListener(twitchApiClient: ApiClient) {
       }
   }
 }
+
+export const { twitchApiClient, twitchEventSubListener } = await createTwitchListener();

@@ -1,22 +1,21 @@
-import { CacheType, ChatInputCommandInteraction, Client, Events, GatewayIntentBits, MessageFlags } from "discord.js";
+import { CacheType, ChatInputCommandInteraction, Events, MessageFlags } from "discord.js";
 import { envVars } from "../loadEnvVars.js";
 import { Command } from "./commands/types.js";
 import { commandsMap } from "./commands/index.js";
+import { discordClient } from "./client.js";
 
 const { discordBotToken } = envVars;
 
 const DEFAULT_COOLDOWN = 3_000;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-client.once(Events.ClientReady, readyClient => {
+discordClient.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
 console.log("Trying to login discord bot")
-client.login(discordBotToken);
+discordClient.login(discordBotToken);
 
-client.on(Events.InteractionCreate, async interaction => {
+discordClient.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
 	const command = commandsMap[interaction.commandName];
