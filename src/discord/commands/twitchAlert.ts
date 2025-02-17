@@ -36,6 +36,8 @@ const commandJson = new SlashCommandBuilder()
   .addSubcommandGroup(scg => scg.setName("channels").setDescription("Manage the twitch channels to subscribe to")
     .addSubcommand(sc => sc.setName("add").setDescription("Subscribe to a twitch channel's online and offline events")
       .addStringOption(o => o.setName("twitch-channel").setDescription("The Twitch channel to subscribe to").setRequired(true)))
+    .addSubcommand(sc => sc.setName("remove").setDescription("Remove a Twitch channel subscription from this server")
+      .addStringOption(o => o.setName("twitch-channel").setDescription("Unsubscribe from this Twitch channel").setRequired(true)))
     .addSubcommand(sc => sc.setName("get").setDescription("Get the twitch channels subscribe to in this server"))
   )
   .addSubcommandGroup(scg => scg.setName("alerts-channel").setDescription("Manage the channel to which Twitch alerts are sent")
@@ -109,8 +111,20 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
         await interaction.followUp({ content: `Subscription to ${twitchName} has been made!` })
       }
     }
+    if (subCommand === "remove") {
+      const twitchName = interaction.options.getString("twitch-channel", true);
+      twitchAlertStore.removeTwitchChannelSubscription(guild, twitchName);
+      await interaction.reply({content: `Removed subscription to ${twitchName}`, flags: MessageFlags.Ephemeral })
+    }
     if (subCommand === "get") {
-      await interaction.reply("TODO")
+      const twitchSubscriptions = twitchAlertStore.getTwitchChannelSubscriptions(guild);
+
+      if (!twitchSubscriptions || twitchSubscriptions.size === 0) {
+        await interaction.reply({ content: `Not currently subscribed to any Twitch channels in this server`, flags: MessageFlags.Ephemeral });
+      } else {
+        const channels = Array.from(twitchSubscriptions, sub => `\`${sub}\``).join(", ")
+        await interaction.reply({ content: `You're subscribed to: ${channels}.`})
+      }
     }
   }
   else if (subCommandGroup === "alerts-channel") {

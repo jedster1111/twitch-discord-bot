@@ -1,5 +1,5 @@
 import { HelixStream, HelixUser } from "@twurple/api";
-import { Channel, Guild } from "discord.js";
+import { Channel, Guild, SendableChannels } from "discord.js";
 import { twitchEventSubListener } from "../../createTwitchListener.js";
 import { waitToExist } from "../../waitFor.js";
 import { EventSubHttpListener } from "@twurple/eventsub-http";
@@ -12,7 +12,7 @@ type TwitchEventSubscription = ReturnType<EventSubHttpListener["onStreamOnline"]
 export type GuildData = {
   guild: Guild;
   channel?: Channel;
-  subscribedTwitchChannels: Set<HelixUser>;
+  subscribedTwitchChannels: Set<string>;
 };
 
 export type ValidatedGuildData = GuildData & {
@@ -21,7 +21,7 @@ export type ValidatedGuildData = GuildData & {
 
 export type ChannelData = {
   channel: HelixUser;
-  guildsToAlert: Set<Guild>;
+  guildsToAlert: Set<string>;
   onStreamOnlineHandle?: TwitchEventSubscription;
   onStreamOfflineHandle?: TwitchEventSubscription;
 };
@@ -49,10 +49,10 @@ export class TwitchAlertStore {
 
   addTwitchChannelSubscription(guild: Guild, twitchChannel: HelixUser) {
     const newGuildData = this.guildDataMap[guild.id] ??= { guild, channel: undefined, subscribedTwitchChannels: new Set() };
-    newGuildData.subscribedTwitchChannels.add(twitchChannel);
+    newGuildData.subscribedTwitchChannels.add(twitchChannel.displayName);
 
     const twitchChannelData = this.twitchChannelDataMap[twitchChannel.name] ??= { channel: twitchChannel, guildsToAlert: new Set(), onStreamOnlineHandle: undefined, onStreamOfflineHandle: undefined };
-    twitchChannelData.guildsToAlert.add(guild);
+    twitchChannelData.guildsToAlert.add(guild.id);
 
     twitchChannelData.onStreamOnlineHandle ??= twitchEventSubListener.onStreamOnline(twitchChannel, async (event) => {
       console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`);
@@ -66,12 +66,26 @@ export class TwitchAlertStore {
     });
   }
 
-  setChannelToSendTwitchAlerts(guild: Guild, channel: Channel) {
-    if (!channel.isSendable()) { 
-      console.warn(`Can't configure alerts to be sent to a non-sendable channel: ${channel.name}.`)  
-      return;
-     }
+  removeTwitchChannelSubscription(guild: Guild, twitchChannel: string): void {
+    const guildData = this.guildDataMap[guild.id];
+    guildData?.subscribedTwitchChannels.delete(twitchChannel)
 
+    const twitchChannelData = this.twitchChannelDataMap[twitchChannel];
+    const didRemoveGuild = twitchChannelData?.guildsToAlert.delete(guild.id);
+    if (twitchChannelData && didRemoveGuild && twitchChannelData.guildsToAlert.size === 0) {
+      console.log(`No more servers to alert for ${twitchChannel}, stopping subscriptions`)
+      twitchChannelData.onStreamOnlineHandle?.stop();
+      twitchChannelData.onStreamOfflineHandle?.stop();
+
+      delete this.twitchChannelDataMap[twitchChannel];
+    }
+  }
+
+  getTwitchChannelSubscriptions(guild: Guild): Set<string> | undefined {
+    return this.guildDataMap[guild.id]?.subscribedTwitchChannels;
+  }
+
+  setChannelToSendTwitchAlerts(guild: Guild, channel: SendableChannels) {
     const newGuildData = this.guildDataMap[guild.id] ??= { guild, channel: undefined, subscribedTwitchChannels: new Set() };
     newGuildData.channel = channel;
   }
@@ -79,7 +93,7 @@ export class TwitchAlertStore {
   private getGuildDatas(twitchChannel: HelixUser): ValidatedGuildData[] {
     const guildDatas: ValidatedGuildData[] = [];
     for (const guild of this.twitchChannelDataMap[twitchChannel.name]?.guildsToAlert ?? []) {
-      const guildData = this.guildDataMap[guild.id];
+      const guildData = this.guildDataMap[guild];
       if (!guildData) continue;
       if (!guildData || !this.validateGuildData(guildData)) continue;
       guildDatas.push(guildData);
