@@ -3,6 +3,7 @@ import { Command, CommandConfig } from "./types.js";
 import { UsageStore } from "../store/timestampStore.js";
 import { TwitchAlertStore } from "./TwitchAlertStore.js";
 import { twitchApiClient } from "../../createTwitchListener.js";
+import { buildEmbed, buildMessageData } from "../../discordEmbed.js";
 
 const config: CommandConfig = {
   cooldown: 3_000
@@ -51,21 +52,14 @@ const twitchAlertStore = new TwitchAlertStore();
 
 twitchAlertStore.setHandleStreamOnline(async (guildDatas, stream, twitchChannel) => {
   for (const guildData of guildDatas) {
-    if (guildData.channel.isSendable()) {
-      await guildData.channel.send({ content: `${twitchChannel.displayName} just went online!` })
-    } else {
-      console.warn("Tried to send Discord message to un-sendable channel")
-    }
+    const embed = buildEmbed(guildData.messageConfig, buildMessageData(twitchChannel, stream))
+    await guildData.channelToAlert.send({ content: `${twitchChannel.displayName} just went online!`, embeds: [embed] })
   }
 })
 
 twitchAlertStore.setHandleStreamOffline(async (guildDatas, twitchChannel) => {
   for (const guildData of guildDatas) {
-    if (guildData.channel.isSendable()) {
-      await guildData.channel.send({ content: `${twitchChannel.displayName} just went offline!` })
-    } else {
-      console.warn("Tried to send Discord message to un-sendable channel")
-    }
+    await guildData.channelToAlert.send({ content: `${twitchChannel.displayName} just went offline!` })
   }
 })
 

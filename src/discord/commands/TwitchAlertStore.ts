@@ -3,6 +3,7 @@ import { Guild, TextChannel } from "discord.js";
 import { twitchEventSubListener } from "../../createTwitchListener.js";
 import { waitToExist } from "../../waitFor.js";
 import { EventSubHttpListener } from "@twurple/eventsub-http";
+import { DiscordMessageConfig } from "../../types.js";
 
 export type StreamOnlineHandler = (guildDatas: ValidatedGuildData[], stream: HelixStream | null, twitchChannel: HelixUser) => Promise<void>;
 export type StreamOfflineHandler = (guildDatas: ValidatedGuildData[], twitchChannel: HelixUser) => Promise<void>;
@@ -11,13 +12,14 @@ type TwitchEventSubscription = ReturnType<EventSubHttpListener["onStreamOnline"]
 
 export type GuildData = {
   guild: Guild;
-  channel?: TextChannel;
+  channelToAlert?: TextChannel;
   subscribedTwitchChannels: Set<string>;
+  messageConfig: DiscordMessageConfig;
 };
 
 export type ValidatedGuildData = GuildData & {
-  channel: NonNullable<GuildData['channel']>
-}
+  channelToAlert: NonNullable<GuildData['channelToAlert']>
+};
 
 export type ChannelData = {
   channel: HelixUser;
@@ -48,7 +50,7 @@ export class TwitchAlertStore {
   }
 
   addTwitchChannelSubscription(guild: Guild, twitchChannel: HelixUser) {
-    const newGuildData = this.guildDataMap[guild.id] ??= { guild, channel: undefined, subscribedTwitchChannels: new Set() };
+    const newGuildData = this.guildDataMap[guild.id] ??= { guild, channelToAlert: undefined, subscribedTwitchChannels: new Set(), messageConfig: {} };
     newGuildData.subscribedTwitchChannels.add(twitchChannel.displayName);
 
     const twitchChannelData = this.twitchChannelDataMap[twitchChannel.name] ??= { channel: twitchChannel, guildsToAlert: new Set(), onStreamOnlineHandle: undefined, onStreamOfflineHandle: undefined };
@@ -86,12 +88,12 @@ export class TwitchAlertStore {
   }
 
   setChannelToSendTwitchAlerts(guild: Guild, channel: TextChannel) {
-    const newGuildData = this.guildDataMap[guild.id] ??= { guild, channel: undefined, subscribedTwitchChannels: new Set() };
-    newGuildData.channel = channel;
+    const newGuildData = this.guildDataMap[guild.id] ??= { guild, channelToAlert: undefined, subscribedTwitchChannels: new Set(), messageConfig: {} };
+    newGuildData.channelToAlert = channel;
   }
 
   getChannelToSendTwitchAlerts(guild: Guild): TextChannel | undefined {
-    return this.guildDataMap[guild.id]?.channel;
+    return this.guildDataMap[guild.id]?.channelToAlert;
   }
 
   private getGuildDatas(twitchChannel: HelixUser): ValidatedGuildData[] {
@@ -106,7 +108,7 @@ export class TwitchAlertStore {
   }
 
   private validateGuildData(data: GuildData): data is ValidatedGuildData {
-    if (!data.channel) {
+    if (!data.channelToAlert) {
       console.warn(`Discord channel hasn't been set for twitch alert for guild: ${data.guild.name}`);
       return false;
     }
