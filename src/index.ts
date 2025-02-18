@@ -11,6 +11,10 @@ twitchEventSubListener.start();
 console.log(`Started twitch listener on port ${envVars.twitchListenerPort}!`)
 
 import "./discord/bot.js";
+import { loadStore, writeStore } from './jsonStore.js';
+
+await writeStore();
+await loadStore();
 
 const staticData = generateStaticDataAtStartup();
 
