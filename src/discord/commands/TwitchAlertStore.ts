@@ -90,6 +90,10 @@ export class TwitchAlertStore {
     newGuildData.channel = channel;
   }
 
+  getChannelToSendTwitchAlerts(guild: Guild): Channel | undefined {
+    return this.guildDataMap[guild.id]?.channel;
+  }
+
   private getGuildDatas(twitchChannel: HelixUser): ValidatedGuildData[] {
     const guildDatas: ValidatedGuildData[] = [];
     for (const guild of this.twitchChannelDataMap[twitchChannel.name]?.guildsToAlert ?? []) {

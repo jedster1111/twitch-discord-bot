@@ -43,6 +43,7 @@ const commandJson = new SlashCommandBuilder()
   .addSubcommandGroup(scg => scg.setName("alerts-channel").setDescription("Manage the channel to which Twitch alerts are sent")
     .addSubcommand(sc => sc.setName("set").setDescription("Set the channel to which Twitch alerts are sent")
       .addChannelOption(o => o.setName("channel").setDescription("The channel to send Twitch alerts to").addChannelTypes(ChannelType.GuildText).setRequired(true)))
+    .addSubcommand(sc => sc.setName("get").setDescription("Get the channel to which Twitch alerts are sent"))
   )
   .toJSON();
 
@@ -108,22 +109,22 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
       } else {
         twitchAlertStore.addTwitchChannelSubscription(interaction.guild, twitchChannel);
 
-        await interaction.followUp({ content: `Subscription to ${twitchName} has been made!` })
+        await interaction.followUp({ content: `Subscribed to ${twitchName}` })
       }
     }
     if (subCommand === "remove") {
       const twitchName = interaction.options.getString("twitch-channel", true);
       twitchAlertStore.removeTwitchChannelSubscription(guild, twitchName);
-      await interaction.reply({content: `Removed subscription to ${twitchName}`, flags: MessageFlags.Ephemeral })
+      await interaction.reply({ content: `Removed subscription to ${twitchName}`, flags: MessageFlags.Ephemeral })
     }
     if (subCommand === "get") {
       const twitchSubscriptions = twitchAlertStore.getTwitchChannelSubscriptions(guild);
 
       if (!twitchSubscriptions || twitchSubscriptions.size === 0) {
-        await interaction.reply({ content: `Not currently subscribed to any Twitch channels in this server`, flags: MessageFlags.Ephemeral });
+        await interaction.reply({ content: `Not currently subscribed to any Twitch channels`, flags: MessageFlags.Ephemeral });
       } else {
         const channels = Array.from(twitchSubscriptions, sub => `\`${sub}\``).join(", ")
-        await interaction.reply({ content: `You're subscribed to: ${channels}.`})
+        await interaction.reply({ content: `Subscribed to ${channels}.` })
       }
     }
   }
@@ -134,6 +135,16 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
       twitchAlertStore.setChannelToSendTwitchAlerts(interaction.guild, channel);
 
       await interaction.reply({ content: `Twitch alerts will be sent to ${channel.name} from now on!`, flags: MessageFlags.Ephemeral });
+    }
+    if (subCommand === "get") {
+      const channel = twitchAlertStore.getChannelToSendTwitchAlerts(guild);
+
+      if (!channel) {
+        await interaction.reply({ content: `No channel is currently set. Please set a channel to receive Twitch alerts!`, flags: MessageFlags.Ephemeral })
+        return;
+      } else {
+        await interaction.reply({ content: `Twitch alerts will be sent to ${channel.name}`, flags: MessageFlags.Ephemeral })
+      }
     }
   }
 }
