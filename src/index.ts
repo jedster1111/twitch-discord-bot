@@ -4,7 +4,7 @@ import { EventSubStreamOnlineEvent } from './types.js';
 import { envVars } from './loadEnvVars.js';
 import { generateStaticDataAtStartup } from './generateStaticDataAtStartup.js';
 import { TWITCH_ICON_URL } from './constants.js';
-import { buildEmbed } from './discordEmbed.js';
+import { buildEmbed, buildMessageData } from './discordEmbed.js';
 import { twitchApiClient, twitchEventSubListener } from './createTwitchListener.js'
 
 twitchEventSubListener.start();
@@ -49,27 +49,28 @@ twitchApiClient.users.getUsersByNames(staticData.uniqueUsersToSubscribeTo)
     })
   });
 
-function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent, user: HelixUser, stream: HelixStream | null) {
+async function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnlineEvent, user: HelixUser, stream: HelixStream | null) {
   try {
     const webhooksForUser = staticData.twitchNameToDiscordWebhooksMap[user.name];
     if (!webhooksForUser) throw new Error("Failed to find discord channels to send message to for twitch channel");
 
-    webhooksForUser.forEach(webhook => {
+    for (const webhook of webhooksForUser) {
       const discordServerInfo = staticData.saturatedDiscordServerInfoMap[webhook];
       if (!discordServerInfo) throw new Error("Failed to find discord server info for specified webhook")
 
       const webhookClient = discordServerInfo.discordWebhookClient;
-      const messageConfig = discordServerInfo.discordMessageConfig;
+      const messageConfig = discordServerInfo.discordMessageConfig || {};
 
-      const embed = buildEmbed(messageConfig, event, user, stream)
+      const messageData = buildMessageData(user, stream);
+      const embed = buildEmbed(messageConfig, messageData);
 
-      webhookClient.send({
+      await webhookClient.send({
         username: messageConfig?.botName,
         avatarURL: messageConfig?.avatarPictureUrl || TWITCH_ICON_URL,
         content: messageConfig?.shouldTagEveryone ? "@everyone" : undefined,
         embeds: [embed]
       })
-    })
+    }
   } catch (error) {
     console.error("Error sending message to Discord Webhook", error)
   }

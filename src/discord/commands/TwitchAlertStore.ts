@@ -1,5 +1,5 @@
 import { HelixStream, HelixUser } from "@twurple/api";
-import { Channel, Guild, SendableChannels } from "discord.js";
+import { Guild, TextChannel } from "discord.js";
 import { twitchEventSubListener } from "../../createTwitchListener.js";
 import { waitToExist } from "../../waitFor.js";
 import { EventSubHttpListener } from "@twurple/eventsub-http";
@@ -11,7 +11,7 @@ type TwitchEventSubscription = ReturnType<EventSubHttpListener["onStreamOnline"]
 
 export type GuildData = {
   guild: Guild;
-  channel?: Channel;
+  channel?: TextChannel;
   subscribedTwitchChannels: Set<string>;
 };
 
@@ -85,12 +85,12 @@ export class TwitchAlertStore {
     return this.guildDataMap[guild.id]?.subscribedTwitchChannels;
   }
 
-  setChannelToSendTwitchAlerts(guild: Guild, channel: SendableChannels) {
+  setChannelToSendTwitchAlerts(guild: Guild, channel: TextChannel) {
     const newGuildData = this.guildDataMap[guild.id] ??= { guild, channel: undefined, subscribedTwitchChannels: new Set() };
     newGuildData.channel = channel;
   }
 
-  getChannelToSendTwitchAlerts(guild: Guild): Channel | undefined {
+  getChannelToSendTwitchAlerts(guild: Guild): TextChannel | undefined {
     return this.guildDataMap[guild.id]?.channel;
   }
 
