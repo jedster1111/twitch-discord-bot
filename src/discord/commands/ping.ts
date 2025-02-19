@@ -15,11 +15,14 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
   await interaction.reply('Pong!')
 }
 
+const usageStore = new UsageStore();
 const command: Command = {
   config,
   commandJson,
   handler,
-  usageStore: new UsageStore()
+  stores: {
+    [usageStore.getKey()]: usageStore
+  }
 }
 
 export default command;

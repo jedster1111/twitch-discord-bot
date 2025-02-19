@@ -21,10 +21,7 @@ const prodDiscordServerInfos: DiscordServerInfo[] = [
 ]
 
 const devDiscordServerInfos: DiscordServerInfo[] = [
-  {
-    discordWebhook: JedServerDiscordWebhook,
-    twitchChannelNamesToWatch: ["jedster2222"]
-  }
+
 ]
 
 const getDiscordServerInfos = () => {

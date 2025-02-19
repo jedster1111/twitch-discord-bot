@@ -3,6 +3,8 @@ import { envVars } from "../loadEnvVars.js";
 import { Command } from "./commands/types.js";
 import { commandsMap } from "./commands/index.js";
 import { discordClient } from "./client.js";
+import { getCommandData, SavedData, writeConfig } from "../configStore.js";
+import { UsageStore } from "./store/timestampStore.js";
 
 const { discordBotToken } = envVars;
 
@@ -10,9 +12,17 @@ const DEFAULT_COOLDOWN = 3_000;
 
 discordClient.once(Events.ClientReady, readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+	for (const [commandName, command] of Object.entries(commandsMap)) {
+		for (const [storeKey, store] of Object.entries(command.stores)) {
+			const storeData = getCommandData(commandName)?.[storeKey];
+			if (storeData) {
+				store.hydrateFromDto?.(storeData)
+			}
+		}
+	}
 });
 
-console.log("Trying to login discord bot")
+console.log("Starting discord bot!")
 discordClient.login(discordBotToken);
 
 discordClient.on(Events.InteractionCreate, async interaction => {
@@ -27,6 +37,29 @@ discordClient.on(Events.InteractionCreate, async interaction => {
 	}
 })
 
+process.on('SIGTERM', async () => {
+	console.log('SIGTERM signal received.');
+	await cleanup();
+	process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+	console.log('SIGINT signal received.');
+	await cleanup();
+	process.exit(0);
+});
+
+async function cleanup(): Promise<void> {
+	const savedData: SavedData = {};
+	for (const [commandName, command] of Object.entries(commandsMap)) {
+		for (const [storeKey, store] of Object.entries(command.stores)) {
+			(savedData[commandName] ??= {})[storeKey] = store.toDto?.()
+		}
+	}
+	await writeConfig(savedData)
+
+}
+
 function executeCommand(command: Command) {
 	return async (interaction: ChatInputCommandInteraction<CacheType>) => {
 		try {
@@ -35,7 +68,8 @@ function executeCommand(command: Command) {
 				return;
 			}
 
-			command.usageStore.addUsageByUser(interaction.user.id, Date.now(), command.config?.cooldown);
+			// TODO: Improve types
+			(command.stores["usage"] as UsageStore | undefined)?.addUsageByUser(interaction.user.id, Date.now(), command.config?.cooldown);
 
 			await command.handler(interaction);
 		} catch (error) {
@@ -50,7 +84,8 @@ function executeCommand(command: Command) {
 }
 
 const isCommandOnCooldown = (command: Command, userId: string): boolean => {
-	const lastUsageTimestamp = command.usageStore.getLastUsageByUser(userId);
+	// TODO: Improve types
+	const lastUsageTimestamp = (command.stores["usage"] as UsageStore | undefined)?.getLastUsageByUser(userId);
 	const cooldown = command.config?.cooldown ?? DEFAULT_COOLDOWN;
 	return Boolean(lastUsageTimestamp && (Date.now() < (lastUsageTimestamp + cooldown)))
 }

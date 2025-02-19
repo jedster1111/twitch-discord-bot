@@ -1,4 +1,8 @@
-export class UsageStore {
+import { StoreBase } from "../commands/StoreBase.js";
+
+export class UsageStore extends StoreBase<object, "usage"> {
+  override getKey() { return "usage" as const }
+
   private defaultTTL: number = 600_000
 
   private lastUsageByUser: {

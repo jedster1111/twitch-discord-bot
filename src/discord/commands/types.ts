@@ -1,5 +1,5 @@
 import { CacheType, ChatInputCommandInteraction, RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js"
-import { UsageStore } from "../store/timestampStore.js"
+import { StoreBase } from "./StoreBase.js"
 
 export type CommandConfig = {
   /**
@@ -14,5 +14,5 @@ export type Command = {
   config?: CommandConfig,
   commandJson: RESTPostAPIChatInputApplicationCommandsJSONBody,
   handler: CommandHandler,
-  usageStore: UsageStore
+  stores: { [storeKey: string]: StoreBase }
 }

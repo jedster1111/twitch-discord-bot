@@ -38,11 +38,14 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
   await interaction.followUp(`Message sent!\n${sentMessage.url}`)
 }
 
+const usageStore = new UsageStore();
 const command: Command = {
   config,
   commandJson,
   handler,
-  usageStore: new UsageStore()
+  stores: {
+    [usageStore.getKey()]: usageStore
+  }
 }
 
 export default command;

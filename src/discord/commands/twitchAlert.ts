@@ -9,21 +9,6 @@ const config: CommandConfig = {
   cooldown: 3_000
 }
 
-/**
- * - twitch-alert
- *   - message
- *     - get
- *     - set
- *     - delete
- *   - channels
- *     - get
- *     - add
- *     - remove
- *   - alerts
- *     - set-channel
- *   
- */
-
 const commandJson = new SlashCommandBuilder()
   .setName("twitch-alert")
   .setDescription("Manage twitch alerts.")
@@ -52,14 +37,21 @@ const twitchAlertStore = new TwitchAlertStore();
 
 twitchAlertStore.setHandleStreamOnline(async (guildDatas, stream, twitchChannel) => {
   for (const guildData of guildDatas) {
+    if (!guildData.messageConfig.channelToAlert) {
+      console.warn("No channel to send alerts to for guild!", guildData.guild.name);
+      return;
+    }
     const embed = buildEmbed(guildData.messageConfig, buildMessageData(twitchChannel, stream))
-    await guildData.channelToAlert.send({ content: `${twitchChannel.displayName} just went online!`, embeds: [embed] })
+    await guildData.messageConfig.channelToAlert.send({ content: `${twitchChannel.displayName} just went online!`, embeds: [embed] })
   }
 })
 
 twitchAlertStore.setHandleStreamOffline(async (guildDatas, twitchChannel) => {
   for (const guildData of guildDatas) {
-    await guildData.channelToAlert.send({ content: `${twitchChannel.displayName} just went offline!` })
+    if (!guildData.messageConfig.channelToAlert) {
+      return;
+    }
+    await guildData.messageConfig.channelToAlert.send({ content: `${twitchChannel.displayName} just went offline!` })
   }
 })
 
@@ -114,10 +106,10 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
     if (subCommand === "get") {
       const twitchSubscriptions = twitchAlertStore.getTwitchChannelSubscriptions(guild);
 
-      if (!twitchSubscriptions || twitchSubscriptions.size === 0) {
+      if (!twitchSubscriptions || twitchSubscriptions.length === 0) {
         await interaction.reply({ content: `Not currently subscribed to any Twitch channels`, flags: MessageFlags.Ephemeral });
       } else {
-        const channels = Array.from(twitchSubscriptions, sub => `\`${sub}\``).join(", ")
+        const channels = twitchSubscriptions.map(sub => `${sub.displayName}`).join(", ")
         await interaction.reply({ content: `Subscribed to ${channels}.` })
       }
     }
@@ -143,11 +135,15 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
   }
 }
 
+const usageStore = new UsageStore();
 const command: Command = {
   config,
   commandJson,
   handler,
-  usageStore: new UsageStore()
+  stores: {
+    [usageStore.getKey()]: usageStore,
+    [twitchAlertStore.getKey()]: twitchAlertStore
+  }
 }
 
 export default command;
