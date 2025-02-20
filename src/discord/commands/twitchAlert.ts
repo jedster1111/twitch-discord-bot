@@ -159,7 +159,7 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
       const botName = interaction.options.getString("bot-name");
       const botAvatarUrl = interaction.options.getString("bot-avatar-url");
       const embedTitleTemplate = interaction.options.getString("embed-title-template");
-      const preEmbedContent = interaction.options.getString("pre-embed-content");
+      const preEmbedContent = interaction.options.getString("pre-embed-content")?.replace("\\n", "\n");
       const channel = interaction.options.getChannel("channel", false, [
         ChannelType.GuildText,
         ChannelType.GuildAnnouncement,
@@ -174,10 +174,7 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
         channel,
       );
 
-      await interaction.reply({
-        content: "Updated config!",
-        flags: MessageFlags.Ephemeral,
-      });
+      await interaction.reply({ content: "Updated config!", flags: MessageFlags.Ephemeral });
     } else if (subCommand === "unset") {
       const botName = interaction.options.getBoolean("bot-name");
       const botAvatarUrl = interaction.options.getBoolean("bot-avatar-url");

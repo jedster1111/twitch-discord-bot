@@ -120,7 +120,7 @@ export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAler
     botName: string | null,
     botAvatarUrl: string | null,
     embedTitleTemplate: string | null,
-    preEmbedContent: string | null,
+    preEmbedContent: string | undefined,
     channel: AcceptableChannels | null,
   ) {
     const guildData = (this.guildDataMap[guild.id] ??= {
