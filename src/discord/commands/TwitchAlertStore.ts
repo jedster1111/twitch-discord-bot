@@ -3,7 +3,7 @@ import { Guild, TextChannel } from "discord.js";
 import { twitchApiClient, twitchEventSubListener } from "../../createTwitchListener.js";
 import { waitToExist } from "../../waitFor.js";
 import { EventSubHttpListener } from "@twurple/eventsub-http";
-import { DiscordMessageConfig, DiscordMessageConfigDTO, discordMessageConfigToDto, hydrateDiscordMessageConfig } from "../../types.js";
+import { createEmptyDiscordMessageConfig, DiscordMessageConfig, DiscordMessageConfigDTO, discordMessageConfigToDto, getWebhookFromChannel, hydrateDiscordMessageConfig } from "../../types.js";
 import { discordClient } from "../client.js";
 import { StoreBase } from "./StoreBase.js";
 
@@ -80,7 +80,7 @@ export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAler
             continue;
           }
 
-          this.addTwitchChannelSubscription(guild, twitchChannel, hydrateDiscordMessageConfig(guildDataDto.messageConfig));
+          this.addTwitchChannelSubscription(guild, twitchChannel, await hydrateDiscordMessageConfig(guildDataDto.messageConfig));
         }
       }
     } catch (e) {
@@ -88,11 +88,53 @@ export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAler
     }
   }
 
-  private messages: { [guildId: string]: string; } = {};
+  getMessageConfig(guild: Guild): DiscordMessageConfig | undefined {
+    return this.guildDataMap[guild.id]?.messageConfig;
+  }
 
-  getMessage(guildId: string): string | undefined { return this.messages[guildId]; }
-  setMessage(guildId: string, message: string) { this.messages[guildId] = message; }
-  removeMessage(guildId: string) { delete this.messages[guildId]; }
+  async setMessageConfig(
+    guild: Guild,
+    botName: string | null,
+    botAvatarUrl: string | null,
+    embedTitleTemplate: string | null,
+    preEmbedContent: string | null,
+    channel: TextChannel | null
+  ) {
+    const guildData = this.guildDataMap[guild.id] ??= { guild, subscribedTwitchChannels: {}, messageConfig: createEmptyDiscordMessageConfig() };
+    if (botName) guildData.messageConfig.botName = botName;
+    if (botAvatarUrl) guildData.messageConfig.avatarPictureUrl = botAvatarUrl;
+    if (embedTitleTemplate) guildData.messageConfig.embedTitleTemplate = embedTitleTemplate;
+    if (preEmbedContent) guildData.messageConfig.preEmbedContent = preEmbedContent;
+
+    if (channel) {
+      const webHook = await getWebhookFromChannel(channel);
+      guildData.messageConfig.channelToAlert = channel;
+      guildData.messageConfig.webhookToAlert = webHook;
+    }
+  }
+
+  unsetMessageConfig(
+    guild: Guild,
+    botName: boolean | null,
+    botAvatarUrl: boolean | null,
+    embedTitleTemplate: boolean | null,
+    preEmbedContent: boolean | null,
+    channel: boolean | null
+  ) {
+    const guildData = this.guildDataMap[guild.id];
+
+    if (!guildData) return;
+
+    if (botName) delete guildData.messageConfig.botName;
+    if (botAvatarUrl) delete guildData.messageConfig.avatarPictureUrl;
+    if (embedTitleTemplate) delete guildData.messageConfig.embedTitleTemplate;
+    if (preEmbedContent) delete guildData.messageConfig.preEmbedContent;
+
+    if (channel) {
+      delete guildData.messageConfig.channelToAlert;
+      delete guildData.messageConfig.webhookToAlert;
+    }
+  }
 
   private guildDataMap: { [guildId: string]: GuildData; } = {};
   private twitchChannelDataMap: { [channelName: string]: ChannelData; } = {};
@@ -109,7 +151,7 @@ export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAler
   }
 
   addTwitchChannelSubscription(guild: Guild, twitchChannel: HelixUser, messageConfig?: DiscordMessageConfig) {
-    const newGuildData = this.guildDataMap[guild.id] ??= { guild, subscribedTwitchChannels: {}, messageConfig: messageConfig || {} };
+    const newGuildData = this.guildDataMap[guild.id] ??= { guild, subscribedTwitchChannels: {}, messageConfig: messageConfig || createEmptyDiscordMessageConfig() };
     newGuildData.subscribedTwitchChannels[twitchChannel.name] = twitchChannel;
 
     const twitchChannelData = this.twitchChannelDataMap[twitchChannel.name] ??= { channel: twitchChannel, guildsToAlert: new Set(), onStreamOnlineHandle: undefined, onStreamOfflineHandle: undefined };
@@ -144,15 +186,6 @@ export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAler
 
   getTwitchChannelSubscriptions(guild: Guild): Array<HelixUser> | undefined {
     return Object.values(this.guildDataMap[guild.id]?.subscribedTwitchChannels || []);
-  }
-
-  setChannelToSendTwitchAlerts(guild: Guild, channel: TextChannel) {
-    const newGuildData = this.guildDataMap[guild.id] ??= { guild, subscribedTwitchChannels: {}, messageConfig: {} };
-    newGuildData.messageConfig.channelToAlert = channel;
-  }
-
-  getChannelToSendTwitchAlerts(guild: Guild): TextChannel | undefined {
-    return this.guildDataMap[guild.id]?.messageConfig.channelToAlert;
   }
 
   private getGuildDatas(twitchChannel: HelixUser): GuildData[] {

@@ -1,6 +1,6 @@
 import { HelixStream, HelixUser } from '@twurple/api';
 import { waitToExist } from './waitFor.js';
-import { EventSubStreamOnlineEvent } from './types.js';
+import { createEmptyDiscordMessageConfig, EventSubStreamOnlineEvent } from './types.js';
 import { envVars } from './loadEnvVars.js';
 import { generateStaticDataAtStartup } from './generateStaticDataAtStartup.js';
 import { TWITCH_ICON_URL } from './constants.js';
@@ -59,7 +59,7 @@ async function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnline
       if (!discordServerInfo) throw new Error("Failed to find discord server info for specified webhook")
 
       const webhookClient = discordServerInfo.discordWebhookClient;
-      const messageConfig = discordServerInfo.discordMessageConfig || {};
+      const messageConfig = discordServerInfo.discordMessageConfig || createEmptyDiscordMessageConfig();
 
       const messageData = buildMessageData(user, stream);
       const embed = buildEmbed(messageConfig, messageData);
@@ -67,7 +67,6 @@ async function SendTwitchStreamStartedDiscordMessage(event: EventSubStreamOnline
       await webhookClient.send({
         username: messageConfig?.botName,
         avatarURL: messageConfig?.avatarPictureUrl || TWITCH_ICON_URL,
-        content: messageConfig?.shouldTagEveryone ? "@everyone" : undefined,
         embeds: [embed]
       })
     }

@@ -4,6 +4,7 @@ import { UsageStore } from "../store/timestampStore.js";
 import { TwitchAlertStore } from "./TwitchAlertStore.js";
 import { twitchApiClient } from "../../createTwitchListener.js";
 import { buildEmbed, buildMessageData } from "../../discordEmbed.js";
+import { DiscordMessageConfig } from "../../types.js";
 
 const config: CommandConfig = {
   cooldown: 3_000
@@ -12,12 +13,22 @@ const config: CommandConfig = {
 const commandJson = new SlashCommandBuilder()
   .setName("twitch-alert")
   .setDescription("Manage twitch alerts.")
-  .addSubcommandGroup(scg => scg.setName("message").setDescription("Manage twitch alert message. This will appear before the embed when a user goes online.")
-    .addSubcommand(sc => sc.setName("get").setDescription("Gets the current twitch alert message"))
-    .addSubcommand(sc => sc.setName("set").setDescription("Sets the twitch alert message")
-      .addStringOption(o => o.setName("message").setDescription("The message you want to send when a twitch alert fires").setRequired(true))
+  .addSubcommandGroup(scg => scg.setName("config").setDescription("Manage twitch alert configuration")
+    .addSubcommand(sc => sc.setName("get").setDescription("Get config for twitch alerts"))
+    .addSubcommand(sc => sc.setName("set").setDescription("Set config for twitch alerts")
+      .addStringOption(o => o.setName("bot-name").setDescription("The name the bot should make the alert posts with"))
+      .addStringOption(o => o.setName("bot-avatar-url").setDescription("The url for the avatar the bot should make the alert posts with"))
+      .addStringOption(o => o.setName("embed-title-template").setDescription("The title to be used in embed. Must include %s to be replaced with Twitch name."))
+      .addStringOption(o => o.setName("pre-embed-content").setDescription("The message to be posted before the embed."))
+      .addChannelOption(o => o.setName("channel").setDescription("The channel to send Twitch alerts to").addChannelTypes(ChannelType.GuildText))
     )
-    .addSubcommand(sc => sc.setName("remove").setDescription("Removes the current twitch alert message"))
+    .addSubcommand(sc => sc.setName("unset").setDescription("Unset specific config for twitch alerts. Mark config with true to unset it.")
+      .addBooleanOption(o => o.setName("bot-name").setDescription("The name the bot should make the alert posts with"))
+      .addBooleanOption(o => o.setName("bot-avatar-url").setDescription("The url for the avatar the bot should make the alert posts with"))
+      .addBooleanOption(o => o.setName("embed-title-template").setDescription("The title to be used in embed. Must include %s to be replaced with Twitch name."))
+      .addBooleanOption(o => o.setName("pre-embed-content").setDescription("The message to be posted before the embed."))
+      .addBooleanOption(o => o.setName("channel").setDescription("The channel to send Twitch alerts to"))
+    )
   )
   .addSubcommandGroup(scg => scg.setName("channels").setDescription("Manage the twitch channels to subscribe to")
     .addSubcommand(sc => sc.setName("add").setDescription("Subscribe to a twitch channel's online and offline events")
@@ -26,32 +37,46 @@ const commandJson = new SlashCommandBuilder()
       .addStringOption(o => o.setName("twitch-channel").setDescription("Unsubscribe from this Twitch channel").setRequired(true)))
     .addSubcommand(sc => sc.setName("get").setDescription("Get the twitch channels subscribe to in this server"))
   )
-  .addSubcommandGroup(scg => scg.setName("alerts-channel").setDescription("Manage the channel to which Twitch alerts are sent")
-    .addSubcommand(sc => sc.setName("set").setDescription("Set the channel to which Twitch alerts are sent")
-      .addChannelOption(o => o.setName("channel").setDescription("The channel to send Twitch alerts to").addChannelTypes(ChannelType.GuildText).setRequired(true)))
-    .addSubcommand(sc => sc.setName("get").setDescription("Get the channel to which Twitch alerts are sent"))
-  )
   .toJSON();
 
 const twitchAlertStore = new TwitchAlertStore();
 
 twitchAlertStore.setHandleStreamOnline(async (guildDatas, stream, twitchChannel) => {
   for (const guildData of guildDatas) {
-    if (!guildData.messageConfig.channelToAlert) {
+    const messageConfig = guildData.messageConfig;
+    if (!messageConfig.channelToAlert) {
       console.warn("No channel to send alerts to for guild!", guildData.guild.name);
       return;
     }
-    const embed = buildEmbed(guildData.messageConfig, buildMessageData(twitchChannel, stream))
-    await guildData.messageConfig.channelToAlert.send({ content: `${twitchChannel.displayName} just went online!`, embeds: [embed] })
+
+    if (!messageConfig.webhookToAlert) {
+      console.warn("No webhook to send alerts to for guild!", guildData.guild.name);
+      return;
+    }
+
+    const embed = buildEmbed(messageConfig, buildMessageData(twitchChannel, stream))
+    await messageConfig.webhookToAlert.send({
+      username: messageConfig.botName,
+      avatarURL: messageConfig.avatarPictureUrl,
+      content: messageConfig.preEmbedContent,
+      embeds: [embed]
+    })
   }
 })
 
 twitchAlertStore.setHandleStreamOffline(async (guildDatas, twitchChannel) => {
   for (const guildData of guildDatas) {
-    if (!guildData.messageConfig.channelToAlert) {
+    const messageConfig = guildData.messageConfig;
+    if (!messageConfig.channelToAlert) {
+      console.warn("No channel to send alerts to for guild!", guildData.guild.name);
       return;
     }
-    await guildData.messageConfig.channelToAlert.send({ content: `${twitchChannel.displayName} just went offline!` })
+
+    if (!messageConfig.webhookToAlert) {
+      console.warn("No webhook to send alerts to for guild!", guildData.guild.name);
+      return;
+    }
+    // TODO: Update online message
   }
 })
 
@@ -65,25 +90,34 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
     return;
   }
 
-  if (subCommandGroup === "message") {
+  if (subCommandGroup === "config") {
     if (subCommand === "get") {
-      const message = twitchAlertStore.getMessage(guild.id);
-      if (!message) {
-        await interaction.reply({ content: `No message is currently set`, flags: MessageFlags.Ephemeral });
-      } else {
-        await interaction.reply({ content: `**Current message:** ${message}`, flags: MessageFlags.Ephemeral })
-      }
+      const messageConfig = twitchAlertStore.getMessageConfig(guild);
+
+      await interaction.reply({ content: messageConfigToString(messageConfig), flags: MessageFlags.Ephemeral })
+    } else if (subCommand === "set") {
+      const botName = interaction.options.getString("bot-name");
+      const botAvatarUrl = interaction.options.getString("bot-avatar-url");
+      const embedTitleTemplate = interaction.options.getString("embed-title-template");
+      const preEmbedContent = interaction.options.getString("pre-embed-content");
+      const channel = interaction.options.getChannel("channel", false, [ChannelType.GuildText]);
+
+      await twitchAlertStore.setMessageConfig(guild, botName, botAvatarUrl, embedTitleTemplate, preEmbedContent, channel);
+
+      await interaction.reply({ content: "Updated config!", flags: MessageFlags.Ephemeral })
+    } else if (subCommand === "unset") {
+      const botName = interaction.options.getBoolean("bot-name");
+      const botAvatarUrl = interaction.options.getBoolean("bot-avatar-url");
+      const embedTitleTemplate = interaction.options.getBoolean("embed-title-template");
+      const preEmbedContent = interaction.options.getBoolean("pre-embed-content");
+      const channel = interaction.options.getBoolean("channel");
+
+      twitchAlertStore.unsetMessageConfig(guild, botName, botAvatarUrl, embedTitleTemplate, preEmbedContent, channel);
+
+      await interaction.reply({ content: "Unset specified config", flags: MessageFlags.Ephemeral })
     }
-    if (subCommand === "set") {
-      const message = interaction.options.getString("message", true);
-      twitchAlertStore.setMessage(guild.id, message);
-      await interaction.reply({ content: `Updated message!`, flags: MessageFlags.Ephemeral });
-    }
-    if (subCommand === "remove") {
-      twitchAlertStore.removeMessage(guild.id)
-      await interaction.reply({ content: `Message has been removed`, flags: MessageFlags.Ephemeral })
-    }
-  } else if (subCommandGroup === "channels") {
+  }
+  else if (subCommandGroup === "channels") {
     if (subCommand === "add") {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -110,29 +144,15 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
         await interaction.reply({ content: `Not currently subscribed to any Twitch channels`, flags: MessageFlags.Ephemeral });
       } else {
         const channels = twitchSubscriptions.map(sub => `${sub.displayName}`).join(", ")
-        await interaction.reply({ content: `Subscribed to ${channels}.` })
+        await interaction.reply({ content: `Subscribed to ${channels}.`, flags: MessageFlags.Ephemeral })
       }
     }
   }
-  else if (subCommandGroup === "alerts-channel") {
-    if (subCommand === "set") {
-      const channel = interaction.options.getChannel("channel", true, [ChannelType.GuildText]);
+}
 
-      twitchAlertStore.setChannelToSendTwitchAlerts(interaction.guild, channel);
-
-      await interaction.reply({ content: `Twitch alerts will be sent to ${channel.name} from now on!`, flags: MessageFlags.Ephemeral });
-    }
-    if (subCommand === "get") {
-      const channel = twitchAlertStore.getChannelToSendTwitchAlerts(guild);
-
-      if (!channel) {
-        await interaction.reply({ content: `No channel is currently set. Please set a channel to receive Twitch alerts!`, flags: MessageFlags.Ephemeral })
-        return;
-      } else {
-        await interaction.reply({ content: `Twitch alerts will be sent to ${channel.name}`, flags: MessageFlags.Ephemeral })
-      }
-    }
-  }
+function messageConfigToString(messageConfig: DiscordMessageConfig | undefined): string | undefined {
+  const NOT_SET = "Not set"
+  return `__**Current config**__\n**Channel to alert**: *${messageConfig?.channelToAlert?.name || NOT_SET}*,\n**Bot name**: *${messageConfig?.botName || NOT_SET}*,\n**Bot avatar url**: *${messageConfig?.avatarPictureUrl || NOT_SET}*,\n**Embed title template**: *${messageConfig?.embedTitleTemplate || NOT_SET}*,\n**Pre embed content**: *${messageConfig?.preEmbedContent || NOT_SET}*`;
 }
 
 const usageStore = new UsageStore();

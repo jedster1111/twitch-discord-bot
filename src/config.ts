@@ -15,13 +15,15 @@ const prodDiscordServerInfos: DiscordServerInfo[] = [
     discordMessageConfig: {
       botName: "Anna Hown Sminth",
       avatarPictureUrl: "https://i.imgur.com/PMu18WI.png",
-      titleTemplate: "%s is live and feeling purposeful! holy cow! join before he loses it!"
+      embedTitleTemplate: "%s is live and feeling purposeful! holy cow! join before he loses it!",
+      channelToAlert: undefined,
+      webhookToAlert: undefined,
+      preEmbedContent: undefined
     }
   },
 ]
 
 const devDiscordServerInfos: DiscordServerInfo[] = [
-
 ]
 
 const getDiscordServerInfos = () => {

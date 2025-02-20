@@ -23,7 +23,7 @@ export function buildEmbed(messageConfig: DiscordMessageConfig, messageData: Mes
 }
 
 function generateTitle(messageConfig: DiscordMessageConfig, messageData: MessageData): string {
-  return format(messageConfig.titleTemplate || DEFAULT_TITLE_TEMPLATE, messageData.twitchChannelDisplayName)
+  return format(messageConfig.embedTitleTemplate || DEFAULT_TITLE_TEMPLATE, messageData.twitchChannelDisplayName)
 }
 
 function generateDescription(messageData: MessageData): string {

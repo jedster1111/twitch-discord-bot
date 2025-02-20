@@ -1,31 +1,43 @@
 import { EventSubHttpListener } from "@twurple/eventsub-http";
-import { ChannelType, TextChannel, WebhookClient } from "discord.js";
-import { twitchApiClient } from "./createTwitchListener.js";
+import { ChannelType, TextChannel, Webhook, WebhookClient } from "discord.js";
 import { discordClient } from "./discord/client.js";
+import { DEFAULT_WEBHOOK_NAME, TWITCH_ICON_URL } from "./constants.js";
 
 export type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
 export type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
 export type DiscordMessageConfig = {
-  channelToAlert?: TextChannel,
-  botName?: string,
-  avatarPictureUrl?: string,
-  shouldTagEveryone?: boolean,
+  channelToAlert: TextChannel | undefined,
+  webhookToAlert: Webhook | undefined,
+  botName: string | undefined,
+  avatarPictureUrl: string | undefined,
   /**
   * `%s` will be replaced with the User's name.
   * `%s` must be found within titleTemplate, or 
   * the user's name will be appended to the end
   * of the resulting string.
   */
-  titleTemplate?: string
+  embedTitleTemplate: string | undefined,
+  preEmbedContent: string | undefined
+}
+
+export function createEmptyDiscordMessageConfig(): DiscordMessageConfig {
+  return {
+    channelToAlert: undefined,
+    webhookToAlert: undefined,
+    botName: undefined,
+    avatarPictureUrl: undefined,
+    embedTitleTemplate: undefined,
+    preEmbedContent: undefined
+  }
 }
 
 export type DiscordMessageConfigDTO = {
   channelToAlertId: string | undefined,
   botName: string | undefined,
   avatarPictureUrl: string | undefined,
-  shouldTagEveryone: boolean | undefined,
-  titleTemplate: string | undefined
+  embedTitleTemplate: string | undefined,
+  preEmbedContent: string | undefined,
 }
 
 export const discordMessageConfigToDto = (obj: DiscordMessageConfig): DiscordMessageConfigDTO => {
@@ -33,25 +45,32 @@ export const discordMessageConfigToDto = (obj: DiscordMessageConfig): DiscordMes
     channelToAlertId: obj.channelToAlert?.id,
     avatarPictureUrl: obj.avatarPictureUrl,
     botName: obj.botName,
-    shouldTagEveryone: obj.shouldTagEveryone,
-    titleTemplate: obj.titleTemplate
+    embedTitleTemplate: obj.embedTitleTemplate,
+    preEmbedContent: obj.preEmbedContent
   }
 }
 
-export const hydrateDiscordMessageConfig = (obj: DiscordMessageConfigDTO): DiscordMessageConfig => {
+export const hydrateDiscordMessageConfig = async (obj: DiscordMessageConfigDTO): Promise<DiscordMessageConfig> => {
+  const channelToAlert = obj.channelToAlertId ? getTextChannelFromId(obj.channelToAlertId) : undefined;
   return {
-    channelToAlert: obj.channelToAlertId ? getTextChannelFromId(obj.channelToAlertId) : undefined,
+    channelToAlert: channelToAlert,
+    webhookToAlert: channelToAlert ? await getWebhookFromChannel(channelToAlert) : undefined,
     avatarPictureUrl: obj.avatarPictureUrl,
     botName: obj.botName,
-    shouldTagEveryone: obj.shouldTagEveryone,
-    titleTemplate: obj.titleTemplate
+    embedTitleTemplate: obj.embedTitleTemplate,
+    preEmbedContent: obj.preEmbedContent
   }
 }
 
-const getTextChannelFromId = (channelId: string): TextChannel | undefined => {
+function getTextChannelFromId(channelId: string): TextChannel | undefined {
   const channel = discordClient.channels.cache.get(channelId);
   if (!channel) return undefined;
-  return channel.type === ChannelType.GuildText ? channel : undefined
+  return channel.type === ChannelType.GuildText ? channel : undefined;
+}
+
+export async function getWebhookFromChannel(channel: TextChannel): Promise<Webhook> {
+  const channelWebhooks = await channel.fetchWebhooks();
+  return channelWebhooks.find(webhook => webhook.name === DEFAULT_WEBHOOK_NAME) || await channel.createWebhook({ name: DEFAULT_WEBHOOK_NAME, avatar: TWITCH_ICON_URL })
 }
 
 export type DiscordServerInfo = {
