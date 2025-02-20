@@ -159,7 +159,7 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
       const botName = interaction.options.getString("bot-name");
       const botAvatarUrl = interaction.options.getString("bot-avatar-url");
       const embedTitleTemplate = interaction.options.getString("embed-title-template");
-      const preEmbedContent = interaction.options.getString("pre-embed-content")?.replace("\\n", "\n");
+      const preEmbedContent = interaction.options.getString("pre-embed-content")?.replaceAll("\\n", "\n");
       const channel = interaction.options.getChannel("channel", false, [
         ChannelType.GuildText,
         ChannelType.GuildAnnouncement,
