@@ -70,7 +70,9 @@ function getTextChannelFromId(channelId: string): TextChannel | undefined {
 
 export async function getWebhookFromChannel(channel: TextChannel): Promise<Webhook> {
   const channelWebhooks = await channel.fetchWebhooks();
-  return channelWebhooks.find(webhook => webhook.name === DEFAULT_WEBHOOK_NAME) || await channel.createWebhook({ name: DEFAULT_WEBHOOK_NAME, avatar: TWITCH_ICON_URL })
+  return channelWebhooks
+    .filter(webhook => webhook.owner?.id === channel.client.user.id)
+    .find(webhook => webhook.name === DEFAULT_WEBHOOK_NAME) || await channel.createWebhook({ name: DEFAULT_WEBHOOK_NAME, avatar: TWITCH_ICON_URL })
 }
 
 export type DiscordServerInfo = {
