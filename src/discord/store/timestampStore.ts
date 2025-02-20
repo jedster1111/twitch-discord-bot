@@ -15,11 +15,7 @@ export class UsageStore extends StoreBase<object, "usage"> {
     [userId: string]: NodeJS.Timeout;
   } = {};
 
-  addUsageByUser(
-    userId: string,
-    lastUseTimestamp: number,
-    ttl: number = this.defaultTTL,
-  ) {
+  addUsageByUser(userId: string, lastUseTimestamp: number, ttl: number = this.defaultTTL) {
     this.lastUsageByUser[userId] = lastUseTimestamp;
 
     const previousTimeout = this.timeoutStore[userId];

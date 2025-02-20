@@ -1,9 +1,6 @@
 import { HelixStream, HelixUser } from "@twurple/api";
 import { Guild, NewsChannel, TextChannel } from "discord.js";
-import {
-  twitchApiClient,
-  twitchEventSubListener,
-} from "../../createTwitchListener.js";
+import { twitchApiClient, twitchEventSubListener } from "../../createTwitchListener.js";
 import { waitToExist } from "../../waitFor.js";
 import { EventSubHttpListener } from "@twurple/eventsub-http";
 import {
@@ -22,14 +19,9 @@ export type StreamOnlineHandler = (
   stream: HelixStream | null,
   twitchChannel: HelixUser,
 ) => Promise<void>;
-export type StreamOfflineHandler = (
-  guildDatas: GuildData[],
-  twitchChannel: HelixUser,
-) => Promise<void>;
+export type StreamOfflineHandler = (guildDatas: GuildData[], twitchChannel: HelixUser) => Promise<void>;
 
-type TwitchEventSubscription = ReturnType<
-  EventSubHttpListener["onStreamOnline"]
->;
+type TwitchEventSubscription = ReturnType<EventSubHttpListener["onStreamOnline"]>;
 
 export type AcceptableChannels = NewsChannel | TextChannel;
 
@@ -48,9 +40,7 @@ export type GuildDataDTO = {
 const guildDataToDto = (guildData: GuildData): GuildDataDTO => {
   return {
     guildId: guildData.guild.id,
-    subscribedTwitchChannelNames: Object.values(
-      guildData.subscribedTwitchChannels,
-    ).map((channel) => channel.name),
+    subscribedTwitchChannelNames: Object.values(guildData.subscribedTwitchChannels).map((channel) => channel.name),
     messageConfig: discordMessageConfigToDto(guildData.messageConfig),
   };
 };
@@ -66,10 +56,7 @@ type TwitchAlertStoreDTO = {
   guildData: GuildDataDTO[];
 };
 
-export class TwitchAlertStore extends StoreBase<
-  TwitchAlertStoreDTO,
-  "twitchAlert"
-> {
+export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAlert"> {
   getKey() {
     return "twitchAlert" as const;
   }
@@ -84,12 +71,8 @@ export class TwitchAlertStore extends StoreBase<
   override async hydrateFromDto(twitchAlertStoreDto: TwitchAlertStoreDTO) {
     const guildData = twitchAlertStoreDto.guildData;
     try {
-      const usernames = new Set(
-        guildData.flatMap((dto) => dto.subscribedTwitchChannelNames),
-      );
-      const twitchChannels = await twitchApiClient.users.getUsersByNames(
-        Array.from(usernames),
-      );
+      const usernames = new Set(guildData.flatMap((dto) => dto.subscribedTwitchChannelNames));
+      const twitchChannels = await twitchApiClient.users.getUsersByNames(Array.from(usernames));
       const twitchChannelMapByName = twitchChannels.reduce<{
         [twitchChannelName: string]: HelixUser;
       }>((accum, channel) => {
@@ -147,10 +130,8 @@ export class TwitchAlertStore extends StoreBase<
     });
     if (botName) guildData.messageConfig.botName = botName;
     if (botAvatarUrl) guildData.messageConfig.avatarPictureUrl = botAvatarUrl;
-    if (embedTitleTemplate)
-      guildData.messageConfig.embedTitleTemplate = embedTitleTemplate;
-    if (preEmbedContent)
-      guildData.messageConfig.preEmbedContent = preEmbedContent;
+    if (embedTitleTemplate) guildData.messageConfig.embedTitleTemplate = embedTitleTemplate;
+    if (preEmbedContent) guildData.messageConfig.preEmbedContent = preEmbedContent;
 
     if (channel) {
       const webHook = await getWebhookFromChannel(channel);
@@ -196,11 +177,7 @@ export class TwitchAlertStore extends StoreBase<
     this.handleStreamOffline = handleStreamOffline;
   }
 
-  addTwitchChannelSubscription(
-    guild: Guild,
-    twitchChannel: HelixUser,
-    messageConfig?: DiscordMessageConfig,
-  ) {
+  addTwitchChannelSubscription(guild: Guild, twitchChannel: HelixUser, messageConfig?: DiscordMessageConfig) {
     const newGuildData = (this.guildDataMap[guild.id] ??= {
       guild,
       subscribedTwitchChannels: {},
@@ -208,59 +185,34 @@ export class TwitchAlertStore extends StoreBase<
     });
     newGuildData.subscribedTwitchChannels[twitchChannel.name] = twitchChannel;
 
-    const twitchChannelData = (this.twitchChannelDataMap[twitchChannel.name] ??=
-      {
-        channel: twitchChannel,
-        guildsToAlert: new Set(),
-        onStreamOnlineHandle: undefined,
-        onStreamOfflineHandle: undefined,
-      });
+    const twitchChannelData = (this.twitchChannelDataMap[twitchChannel.name] ??= {
+      channel: twitchChannel,
+      guildsToAlert: new Set(),
+      onStreamOnlineHandle: undefined,
+      onStreamOfflineHandle: undefined,
+    });
     twitchChannelData.guildsToAlert.add(guild.id);
 
-    twitchChannelData.onStreamOnlineHandle ??=
-      twitchEventSubListener.onStreamOnline(twitchChannel, async (event) => {
-        console.log(
-          `${event.broadcasterDisplayName} is online! ${event.startDate}`,
-        );
-        const twitchStream = await waitToExist(
-          () => event.getStream(),
-          7500,
-          5,
-        );
-        this.handleStreamOnline(
-          this.getGuildDatas(twitchChannel),
-          twitchStream,
-          twitchChannel,
-        );
-      });
+    twitchChannelData.onStreamOnlineHandle ??= twitchEventSubListener.onStreamOnline(twitchChannel, async (event) => {
+      console.log(`${event.broadcasterDisplayName} is online! ${event.startDate}`);
+      const twitchStream = await waitToExist(() => event.getStream(), 7500, 5);
+      this.handleStreamOnline(this.getGuildDatas(twitchChannel), twitchStream, twitchChannel);
+    });
 
-    twitchChannelData.onStreamOfflineHandle ??=
-      twitchEventSubListener.onStreamOffline(twitchChannel, (event) => {
-        console.log(`${event.broadcasterDisplayName} is offline!`);
-        this.handleStreamOffline(
-          this.getGuildDatas(twitchChannel),
-          twitchChannel,
-        );
-      });
+    twitchChannelData.onStreamOfflineHandle ??= twitchEventSubListener.onStreamOffline(twitchChannel, (event) => {
+      console.log(`${event.broadcasterDisplayName} is offline!`);
+      this.handleStreamOffline(this.getGuildDatas(twitchChannel), twitchChannel);
+    });
   }
 
-  removeTwitchChannelSubscription(
-    guild: Guild,
-    twitchChannelName: string,
-  ): void {
+  removeTwitchChannelSubscription(guild: Guild, twitchChannelName: string): void {
     const guildData = this.guildDataMap[guild.id];
     delete guildData?.subscribedTwitchChannels[twitchChannelName];
 
     const twitchChannelData = this.twitchChannelDataMap[twitchChannelName];
     const didRemoveGuild = twitchChannelData?.guildsToAlert.delete(guild.id);
-    if (
-      twitchChannelData &&
-      didRemoveGuild &&
-      twitchChannelData.guildsToAlert.size === 0
-    ) {
-      console.log(
-        `No more servers to alert for ${twitchChannelName}, stopping subscriptions`,
-      );
+    if (twitchChannelData && didRemoveGuild && twitchChannelData.guildsToAlert.size === 0) {
+      console.log(`No more servers to alert for ${twitchChannelName}, stopping subscriptions`);
       twitchChannelData.onStreamOnlineHandle?.stop();
       twitchChannelData.onStreamOfflineHandle?.stop();
 
@@ -269,15 +221,12 @@ export class TwitchAlertStore extends StoreBase<
   }
 
   getTwitchChannelSubscriptions(guild: Guild): Array<HelixUser> | undefined {
-    return Object.values(
-      this.guildDataMap[guild.id]?.subscribedTwitchChannels || [],
-    );
+    return Object.values(this.guildDataMap[guild.id]?.subscribedTwitchChannels || []);
   }
 
   private getGuildDatas(twitchChannel: HelixUser): GuildData[] {
     const guildDatas: GuildData[] = [];
-    for (const guild of this.twitchChannelDataMap[twitchChannel.name]
-      ?.guildsToAlert ?? []) {
+    for (const guild of this.twitchChannelDataMap[twitchChannel.name]?.guildsToAlert ?? []) {
       const guildData = this.guildDataMap[guild];
       if (!guildData) continue;
       guildDatas.push(guildData);

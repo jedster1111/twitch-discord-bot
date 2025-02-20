@@ -1,10 +1,4 @@
-import {
-  CacheType,
-  ChannelType,
-  ChatInputCommandInteraction,
-  MessageFlags,
-  SlashCommandBuilder,
-} from "discord.js";
+import { CacheType, ChannelType, ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { Command, CommandConfig } from "./types.js";
 import { UsageStore } from "../store/timestampStore.js";
 import { wait } from "../../waitFor.js";
@@ -37,8 +31,7 @@ const commandJson = new SlashCommandBuilder()
 
 const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
   const optionResponse = interaction.options.getString(OPTION_MESSAGE);
-  const channelResponse =
-    interaction.options.getChannel<ChannelType.GuildText>(OPTION_CHANNEL);
+  const channelResponse = interaction.options.getChannel<ChannelType.GuildText>(OPTION_CHANNEL);
 
   if (!optionResponse || !channelResponse) throw new Error("Missing options");
 

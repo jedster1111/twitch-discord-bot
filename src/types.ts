@@ -4,11 +4,8 @@ import { discordClient } from "./discord/client.js";
 import { DEFAULT_WEBHOOK_NAME, TWITCH_ICON_URL } from "./constants.js";
 import { AcceptableChannels } from "./discord/commands/TwitchAlertStore.js";
 
-export type EventSubStreamOnlineEventHandler = Parameters<
-  EventSubHttpListener["onStreamOnline"]
->[1];
-export type EventSubStreamOnlineEvent =
-  Parameters<EventSubStreamOnlineEventHandler>[0];
+export type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
+export type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
 export type DiscordMessageConfig = {
   channelToAlert: AcceptableChannels | undefined;
@@ -44,9 +41,7 @@ export type DiscordMessageConfigDTO = {
   preEmbedContent: string | undefined;
 };
 
-export const discordMessageConfigToDto = (
-  obj: DiscordMessageConfig,
-): DiscordMessageConfigDTO => {
+export const discordMessageConfigToDto = (obj: DiscordMessageConfig): DiscordMessageConfigDTO => {
   return {
     channelToAlertId: obj.channelToAlert?.id,
     avatarPictureUrl: obj.avatarPictureUrl,
@@ -56,17 +51,11 @@ export const discordMessageConfigToDto = (
   };
 };
 
-export const hydrateDiscordMessageConfig = async (
-  obj: DiscordMessageConfigDTO,
-): Promise<DiscordMessageConfig> => {
-  const channelToAlert = obj.channelToAlertId
-    ? getTextChannelFromId(obj.channelToAlertId)
-    : undefined;
+export const hydrateDiscordMessageConfig = async (obj: DiscordMessageConfigDTO): Promise<DiscordMessageConfig> => {
+  const channelToAlert = obj.channelToAlertId ? getTextChannelFromId(obj.channelToAlertId) : undefined;
   return {
     channelToAlert: channelToAlert,
-    webhookToAlert: channelToAlert
-      ? await getWebhookFromChannel(channelToAlert)
-      : undefined,
+    webhookToAlert: channelToAlert ? await getWebhookFromChannel(channelToAlert) : undefined,
     avatarPictureUrl: obj.avatarPictureUrl,
     botName: obj.botName,
     embedTitleTemplate: obj.embedTitleTemplate,
@@ -80,9 +69,7 @@ function getTextChannelFromId(channelId: string): TextChannel | undefined {
   return channel.type === ChannelType.GuildText ? channel : undefined;
 }
 
-export async function getWebhookFromChannel(
-  channel: AcceptableChannels,
-): Promise<Webhook> {
+export async function getWebhookFromChannel(channel: AcceptableChannels): Promise<Webhook> {
   const channelWebhooks = await channel.fetchWebhooks();
   return (
     channelWebhooks
@@ -114,5 +101,4 @@ export type NonNullableFields<T> = {
   [P in keyof T]: NonNullable<T[P]>;
 };
 
-export type NonNullableField<T, K extends keyof T> = T &
-  NonNullableFields<Pick<T, K>>;
+export type NonNullableField<T, K extends keyof T> = T & NonNullableFields<Pick<T, K>>;

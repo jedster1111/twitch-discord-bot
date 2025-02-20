@@ -5,9 +5,7 @@ import { Command } from "./types.js";
 
 export const commands = [ping, sendMessage, alertMessage];
 
-export const commandsMap: Record<string, Command> = commands.reduce<
-  Record<string, Command>
->((accum, command) => {
+export const commandsMap: Record<string, Command> = commands.reduce<Record<string, Command>>((accum, command) => {
   accum[command.commandJson.name] = command;
   return accum;
 }, {});

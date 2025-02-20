@@ -1,32 +1,19 @@
 import { ApiClient } from "@twurple/api";
 import { AppTokenAuthProvider } from "@twurple/auth";
-import {
-  EventSubHttpListener,
-  ReverseProxyAdapter,
-} from "@twurple/eventsub-http";
+import { EventSubHttpListener, ReverseProxyAdapter } from "@twurple/eventsub-http";
 import { NgrokAdapter } from "@twurple/eventsub-ngrok";
 import { envVars } from "./loadEnvVars.js";
 
 async function createTwitchListener() {
-  const authProvider = new AppTokenAuthProvider(
-    envVars.twitchClientId,
-    envVars.twitchClientSecret,
-  );
+  const authProvider = new AppTokenAuthProvider(envVars.twitchClientId, envVars.twitchClientSecret);
   const twitchApiClient = new ApiClient({ authProvider });
 
-  const twitchEventSubListener =
-    await createTwitchEventSubListener(twitchApiClient);
+  const twitchEventSubListener = await createTwitchEventSubListener(twitchApiClient);
   return { twitchApiClient, twitchEventSubListener };
 }
 
 async function createTwitchEventSubListener(twitchApiClient: ApiClient) {
-  const {
-    environment,
-    ngrokAuthToken,
-    twitchEventSubSecret,
-    hostName,
-    twitchListenerPort,
-  } = envVars;
+  const { environment, ngrokAuthToken, twitchEventSubSecret, hostName, twitchListenerPort } = envVars;
   switch (environment) {
     case "dev": {
       if (!ngrokAuthToken) throw new Error("No ngrok auth token provided!");
@@ -62,5 +49,4 @@ async function createTwitchEventSubListener(twitchApiClient: ApiClient) {
   }
 }
 
-export const { twitchApiClient, twitchEventSubListener } =
-  await createTwitchListener();
+export const { twitchApiClient, twitchEventSubListener } = await createTwitchListener();

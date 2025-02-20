@@ -31,8 +31,7 @@ export const loadEnvVars = (): EnvConfig => {
   const twitchListenerPort = process.env.TWITCH_LISTENER_PORT;
   const hostName = process.env.HOST_NAME;
   const JedServerDiscordWebhook = process.env.JED_GAMEZ_SERVER_DISCORD_WEBHOOK;
-  const TheBakeryServerDiscordWebhook =
-    process.env.THE_BAKERY_SERVER_DISCORD_WEBHOOK;
+  const TheBakeryServerDiscordWebhook = process.env.THE_BAKERY_SERVER_DISCORD_WEBHOOK;
   const KobertServerDiscordWebhook = process.env.KOBERT_SERVER_DISCORD_WEBHOOK;
 
   const discordBotToken = process.env.DISCORD_BOT_TOKEN;

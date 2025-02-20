@@ -1,8 +1,4 @@
-import {
-  CacheType,
-  ChatInputCommandInteraction,
-  RESTPostAPIChatInputApplicationCommandsJSONBody,
-} from "discord.js";
+import { CacheType, ChatInputCommandInteraction, RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js";
 import { StoreBase } from "./StoreBase.js";
 
 export type CommandConfig = {
@@ -12,9 +8,7 @@ export type CommandConfig = {
   cooldown?: number;
 };
 
-export type CommandHandler = (
-  interaction: ChatInputCommandInteraction<CacheType>,
-) => Promise<void>;
+export type CommandHandler = (interaction: ChatInputCommandInteraction<CacheType>) => Promise<void>;
 
 export type Command = {
   config?: CommandConfig;

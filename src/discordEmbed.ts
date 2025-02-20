@@ -13,10 +13,7 @@ export type MessageData = {
   twitchChannelProfilePicture: string;
 };
 
-export function buildEmbed(
-  messageConfig: DiscordMessageConfig,
-  messageData: MessageData,
-): EmbedBuilder {
+export function buildEmbed(messageConfig: DiscordMessageConfig, messageData: MessageData): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle(generateTitle(messageConfig, messageData))
     .setURL(`https://twitch.tv/${messageData.twitchChannelName}`)
@@ -25,14 +22,8 @@ export function buildEmbed(
     .setThumbnail(messageData.twitchChannelProfilePicture);
 }
 
-function generateTitle(
-  messageConfig: DiscordMessageConfig,
-  messageData: MessageData,
-): string {
-  return format(
-    messageConfig.embedTitleTemplate || DEFAULT_TITLE_TEMPLATE,
-    messageData.twitchChannelDisplayName,
-  );
+function generateTitle(messageConfig: DiscordMessageConfig, messageData: MessageData): string {
+  return format(messageConfig.embedTitleTemplate || DEFAULT_TITLE_TEMPLATE, messageData.twitchChannelDisplayName);
 }
 
 function generateDescription(messageData: MessageData): string {
@@ -43,10 +34,7 @@ function generateDescription(messageData: MessageData): string {
   return description;
 }
 
-export function buildMessageData(
-  user: HelixUser,
-  stream: HelixStream | null | undefined,
-): MessageData {
+export function buildMessageData(user: HelixUser, stream: HelixStream | null | undefined): MessageData {
   return {
     streamGame: stream?.gameName,
     streamTitle: stream?.title,

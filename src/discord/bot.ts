@@ -1,9 +1,4 @@
-import {
-  CacheType,
-  ChatInputCommandInteraction,
-  Events,
-  MessageFlags,
-} from "discord.js";
+import { CacheType, ChatInputCommandInteraction, Events, MessageFlags } from "discord.js";
 import { envVars } from "../loadEnvVars.js";
 import { Command } from "./commands/types.js";
 import { commandsMap } from "./commands/index.js";
@@ -99,21 +94,14 @@ function executeCommand(command: Command) {
 
 const isCommandOnCooldown = (command: Command, userId: string): boolean => {
   // TODO: Improve types
-  const lastUsageTimestamp = (
-    command.stores["usage"] as UsageStore | undefined
-  )?.getLastUsageByUser(userId);
+  const lastUsageTimestamp = (command.stores["usage"] as UsageStore | undefined)?.getLastUsageByUser(userId);
   const cooldown = command.config?.cooldown ?? DEFAULT_COOLDOWN;
-  return Boolean(
-    lastUsageTimestamp && Date.now() < lastUsageTimestamp + cooldown,
-  );
+  return Boolean(lastUsageTimestamp && Date.now() < lastUsageTimestamp + cooldown);
 };
 
-async function handleRateLimitHit(
-  interaction: ChatInputCommandInteraction<CacheType>,
-) {
+async function handleRateLimitHit(interaction: ChatInputCommandInteraction<CacheType>) {
   await interaction.reply({
-    content:
-      "Woah, woah there! You'll have to wait a bit before you can use that command again!",
+    content: "Woah, woah there! You'll have to wait a bit before you can use that command again!",
     flags: MessageFlags.Ephemeral,
   });
 }
