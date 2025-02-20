@@ -1,5 +1,5 @@
 import { HelixStream, HelixUser } from "@twurple/api";
-import { Guild, TextChannel } from "discord.js";
+import { Guild, NewsChannel, TextChannel } from "discord.js";
 import { twitchApiClient, twitchEventSubListener } from "../../createTwitchListener.js";
 import { waitToExist } from "../../waitFor.js";
 import { EventSubHttpListener } from "@twurple/eventsub-http";
@@ -11,6 +11,8 @@ export type StreamOnlineHandler = (guildDatas: GuildData[], stream: HelixStream 
 export type StreamOfflineHandler = (guildDatas: GuildData[], twitchChannel: HelixUser) => Promise<void>;
 
 type TwitchEventSubscription = ReturnType<EventSubHttpListener["onStreamOnline"]>
+
+export type AcceptableChannels = NewsChannel | TextChannel;
 
 export type GuildData = {
   guild: Guild;
@@ -98,7 +100,7 @@ export class TwitchAlertStore extends StoreBase<TwitchAlertStoreDTO, "twitchAler
     botAvatarUrl: string | null,
     embedTitleTemplate: string | null,
     preEmbedContent: string | null,
-    channel: TextChannel | null
+    channel: AcceptableChannels | null
   ) {
     const guildData = this.guildDataMap[guild.id] ??= { guild, subscribedTwitchChannels: {}, messageConfig: createEmptyDiscordMessageConfig() };
     if (botName) guildData.messageConfig.botName = botName;

@@ -2,12 +2,13 @@ import { EventSubHttpListener } from "@twurple/eventsub-http";
 import { ChannelType, TextChannel, Webhook, WebhookClient } from "discord.js";
 import { discordClient } from "./discord/client.js";
 import { DEFAULT_WEBHOOK_NAME, TWITCH_ICON_URL } from "./constants.js";
+import { AcceptableChannels } from "./discord/commands/TwitchAlertStore.js";
 
 export type EventSubStreamOnlineEventHandler = Parameters<EventSubHttpListener["onStreamOnline"]>[1];
 export type EventSubStreamOnlineEvent = Parameters<EventSubStreamOnlineEventHandler>[0];
 
 export type DiscordMessageConfig = {
-  channelToAlert: TextChannel | undefined,
+  channelToAlert: AcceptableChannels | undefined,
   webhookToAlert: Webhook | undefined,
   botName: string | undefined,
   avatarPictureUrl: string | undefined,
@@ -68,7 +69,7 @@ function getTextChannelFromId(channelId: string): TextChannel | undefined {
   return channel.type === ChannelType.GuildText ? channel : undefined;
 }
 
-export async function getWebhookFromChannel(channel: TextChannel): Promise<Webhook> {
+export async function getWebhookFromChannel(channel: AcceptableChannels): Promise<Webhook> {
   const channelWebhooks = await channel.fetchWebhooks();
   return channelWebhooks
     .filter(webhook => webhook.owner?.id === channel.client.user.id)

@@ -21,7 +21,7 @@ const commandJson = new SlashCommandBuilder()
       .addStringOption(o => o.setName("bot-avatar-url").setDescription("The url for the avatar the bot should make the alert posts with"))
       .addStringOption(o => o.setName("embed-title-template").setDescription("The title to be used in embed. Must include %s to be replaced with Twitch name."))
       .addStringOption(o => o.setName("pre-embed-content").setDescription("The message to be posted before the embed."))
-      .addChannelOption(o => o.setName("channel").setDescription("The channel to send Twitch alerts to").addChannelTypes(ChannelType.GuildText))
+      .addChannelOption(o => o.setName("channel").setDescription("The channel to send Twitch alerts to").addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement))
     )
     .addSubcommand(sc => sc.setName("unset").setDescription("Unset specific config for twitch alerts. Mark config with true to unset it.")
       .addBooleanOption(o => o.setName("bot-name").setDescription("The name the bot should make the alert posts with"))
@@ -101,7 +101,7 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
       const botAvatarUrl = interaction.options.getString("bot-avatar-url");
       const embedTitleTemplate = interaction.options.getString("embed-title-template");
       const preEmbedContent = interaction.options.getString("pre-embed-content");
-      const channel = interaction.options.getChannel("channel", false, [ChannelType.GuildText]);
+      const channel = interaction.options.getChannel("channel", false, [ChannelType.GuildText, ChannelType.GuildAnnouncement]);
 
       await twitchAlertStore.setMessageConfig(guild, botName, botAvatarUrl, embedTitleTemplate, preEmbedContent, channel);
 
