@@ -5,6 +5,7 @@ import { TwitchAlertStore } from "./TwitchAlertStore.js";
 import { twitchApiClient } from "../../createTwitchListener.js";
 import { buildEmbed, buildMessageData } from "../../discordEmbed.js";
 import { DiscordMessageConfig } from "../../types.js";
+import { TWITCH_ICON_URL } from "../../constants.js";
 
 const config: CommandConfig = {
   cooldown: 3_000
@@ -57,7 +58,7 @@ twitchAlertStore.setHandleStreamOnline(async (guildDatas, stream, twitchChannel)
     const embed = buildEmbed(messageConfig, buildMessageData(twitchChannel, stream))
     await messageConfig.webhookToAlert.send({
       username: messageConfig.botName,
-      avatarURL: messageConfig.avatarPictureUrl,
+      avatarURL: messageConfig.avatarPictureUrl || TWITCH_ICON_URL,
       content: messageConfig.preEmbedContent,
       embeds: [embed]
     })
