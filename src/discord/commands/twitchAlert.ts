@@ -153,7 +153,7 @@ const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {
 
 function messageConfigToString(messageConfig: DiscordMessageConfig | undefined): string | undefined {
   const NOT_SET = "Not set"
-  return `__**Current config**__\n**Channel to alert**: *${messageConfig?.channelToAlert?.name || NOT_SET}*,\n**Bot name**: *${messageConfig?.botName || NOT_SET}*,\n**Bot avatar url**: *${messageConfig?.avatarPictureUrl || NOT_SET}*,\n**Embed title template**: *${messageConfig?.embedTitleTemplate || NOT_SET}*,\n**Pre embed content**: *${messageConfig?.preEmbedContent || NOT_SET}*`;
+  return `__**Current config**__\n**Channel to alert**: *${messageConfig?.channelToAlert?.url || NOT_SET}*,\n**Bot name**: *${messageConfig?.botName || NOT_SET}*,\n**Bot avatar url**: *${messageConfig?.avatarPictureUrl || NOT_SET}*,\n**Embed title template**: *${messageConfig?.embedTitleTemplate || NOT_SET}*,\n**Pre embed content**: *${messageConfig?.preEmbedContent || NOT_SET}*`;
 }
 
 const usageStore = new UsageStore();
