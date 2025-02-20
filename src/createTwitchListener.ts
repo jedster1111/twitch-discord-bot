@@ -52,6 +52,3 @@ async function createTwitchEventSubListener(twitchApiClient: ApiClient) {
 }
 
 export const { twitchApiClient, twitchEventSubListener } = await createTwitchListener();
-
-twitchEventSubListener.start();
-console.log(`Started twitch listener on port ${envVars.twitchListenerPort}!`)
