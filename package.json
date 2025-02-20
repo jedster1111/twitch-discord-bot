@@ -10,16 +10,26 @@
   "devDependencies": {
     "@eslint/js": "^9.11.1",
     "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
     "globals": "^15.15.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "3.5.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.1"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
   },
   "scripts": {
     "build": "tsc",
     "start": "node --env-file=.env ./dist/index.js",
     "start:dev": "tsc && NODE_OPTIONS=\"--loader ts-node/esm\" node --env-file=.env ./src/index.ts",
     "ci:build": "npm run build && mkdir -p out && cp -r dist ./out/dist && cp package*.json out && cp .env out && cd out && npm install --production",
-    "deploy-discord-commands": "tsc && NODE_OPTIONS=\"--loader ts-node/esm\" node --env-file=.env ./src/discord/deployCommands.ts"
+    "deploy-discord-commands": "tsc && NODE_OPTIONS=\"--loader ts-node/esm\" node --env-file=.env ./src/discord/deployCommands.ts",
+    "prettier": "prettier . --write",
+    "prettier:check": "prettier . --check",
+    "prepare": "husky"
   }
 }
