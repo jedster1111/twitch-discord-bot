@@ -1,4 +1,11 @@
-import { CacheType, ChannelType, ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  CacheType,
+  ChannelType,
+  ChatInputCommandInteraction,
+  MessageFlags,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from "discord.js";
 import { Command, CommandConfig } from "./types.js";
 import { UsageStore } from "../store/timestampStore.js";
 import { wait } from "../../waitFor.js";
@@ -27,6 +34,7 @@ const commandJson = new SlashCommandBuilder()
       .setRequired(true)
       .addChannelTypes(ChannelType.GuildText),
   )
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .toJSON();
 
 const handler = async (interaction: ChatInputCommandInteraction<CacheType>) => {

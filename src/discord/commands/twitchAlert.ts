@@ -1,4 +1,11 @@
-import { CacheType, ChannelType, ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+  CacheType,
+  ChannelType,
+  ChatInputCommandInteraction,
+  MessageFlags,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from "discord.js";
 import { Command, CommandConfig } from "./types.js";
 import { UsageStore } from "../store/timestampStore.js";
 import { TwitchAlertStore } from "./TwitchAlertStore.js";
@@ -91,6 +98,7 @@ const commandJson = new SlashCommandBuilder()
       )
       .addSubcommand((sc) => sc.setName("get").setDescription("Get the twitch channels subscribe to in this server")),
   )
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .toJSON();
 
 const twitchAlertStore = new TwitchAlertStore();
